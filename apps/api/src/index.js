@@ -1,4 +1,7 @@
 import { createHealthHandler } from './health.js';
+import { json } from './http/json.js';
+import { loginHandler, logoutHandler } from './auth/login.js';
+import { createUsersRepo } from './db/users.js';
 
 const health = createHealthHandler();
 
@@ -15,18 +18,30 @@ async function checkDatabase(db) {
   }
 }
 
+function notFound() {
+  return json(404, { ok: false, error: 'not_found' });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
     if (url.pathname === '/health') {
-      return Response.json(health(), { status: 200 });
+      return json(200, health());
     }
 
     if (url.pathname === '/health/db') {
-      return Response.json(await checkDatabase(env.DB), { status: 200 });
+      return json(200, await checkDatabase(env.DB));
     }
 
-    return Response.json({ ok: false, error: 'not_found' }, { status: 404 });
+    if (url.pathname === '/auth/login' && request.method === 'POST') {
+      return loginHandler(request, { usersRepo: createUsersRepo(env.DB) });
+    }
+
+    if (url.pathname === '/auth/logout' && request.method === 'POST') {
+      return logoutHandler();
+    }
+
+    return notFound();
   }
 };
