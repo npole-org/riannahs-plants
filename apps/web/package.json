@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test:unit": "vitest run src/domain src/services.unit.test.js --coverage",
-    "test:integration": "vitest run src/app",
+    "test:integration": "vitest run src/app --coverage.enabled=false",
     "test": "npm run test:unit && npm run test:integration",
     "test:e2e": "playwright test"
   },
