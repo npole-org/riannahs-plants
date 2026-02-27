@@ -26,3 +26,11 @@
    - watering/repotting event logs
    - history views
    - validation and permission hardening
+
+
+## UI theme direction
+
+Design language should be nature-inspired and calm:
+- primary palette: olive / greens
+- supporting neutrals: tan / brown / muted earthy red
+- overall feel: simple, grounded, low-contrast where possible, accessible readability
