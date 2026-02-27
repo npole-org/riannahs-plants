@@ -1,35 +1,33 @@
 import { parseLoginInput } from '../routes/auth.js';
 import { verifyPassword } from '../core/password.js';
-import { createSessionCookie } from './session.js';
+import { clearSessionCookie, createSessionCookie, toBase64Url } from './session.js';
+import { json } from '../http/json.js';
 
 export async function loginHandler(request, { usersRepo }) {
-  const payload = await request.json();
-  const { email, password } = parseLoginInput(payload);
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json(400, { ok: false, error: 'invalid_json' });
+  }
+
+  let email;
+  let password;
+  try {
+    ({ email, password } = parseLoginInput(payload));
+  } catch (error) {
+    return json(400, { ok: false, error: error.message || 'invalid_body' });
+  }
 
   const user = await usersRepo.findByEmail(email);
   if (!user || !verifyPassword(password, user.password_hash)) {
-    return new Response(JSON.stringify({ ok: false, error: 'invalid_credentials' }), {
-      status: 401,
-      headers: { 'content-type': 'application/json; charset=utf-8' }
-    });
+    return json(401, { ok: false, error: 'invalid_credentials' });
   }
 
   const session = JSON.stringify({ userId: user.id, role: user.role, email: user.email });
-  return new Response(JSON.stringify({ ok: true, role: user.role }), {
-    status: 200,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'set-cookie': createSessionCookie(Buffer.from(session).toString('base64url'))
-    }
-  });
+  return json(200, { ok: true, role: user.role }, { 'set-cookie': createSessionCookie(toBase64Url(session)) });
 }
 
 export function logoutHandler() {
-  return new Response(JSON.stringify({ ok: true }), {
-    status: 200,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'set-cookie': 'rp_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0'
-    }
-  });
+  return json(200, { ok: true }, { 'set-cookie': clearSessionCookie() });
 }

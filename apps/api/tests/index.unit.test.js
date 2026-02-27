@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { hashPassword } from '../src/core/password.js';
 import worker from '../src/index.js';
 
 describe('worker index', () => {
@@ -46,5 +47,42 @@ describe('worker index', () => {
     const res = await worker.fetch(new Request('http://local/health/db'), { DB: db });
     const body = await res.json();
     expect(body).toEqual({ ok: false, error: 'db_query_failed' });
+  });
+
+  test('routes login endpoint through users repo and sets cookie', async () => {
+    const passwordHash = hashPassword('123456789012');
+    const db = {
+      prepare() {
+        return {
+          bind() {
+            return {
+              first: async () => ({
+                id: 'u1',
+                email: 'admin@example.com',
+                role: 'admin',
+                password_hash: passwordHash
+              })
+            };
+          }
+        };
+      }
+    };
+
+    const res = await worker.fetch(
+      new Request('http://local/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: 'admin@example.com', password: '123456789012' })
+      }),
+      { DB: db }
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('set-cookie')).toContain('rp_session=');
+  });
+
+  test('logout endpoint clears cookie', async () => {
+    const res = await worker.fetch(new Request('http://local/auth/logout', { method: 'POST' }), {});
+    expect(res.status).toBe(200);
+    expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
   });
 });
