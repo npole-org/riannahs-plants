@@ -42,6 +42,48 @@ export function createSummaryService(fetchImpl = fetch) {
   };
 }
 
+export function createPlantService(fetchImpl = fetch) {
+  return {
+    async listPlants() {
+      const response = await fetchImpl('/plants', { method: 'GET', credentials: 'include' });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'plants_load_failed');
+      return payload.plants || [];
+    },
+
+    async createPlant(input) {
+      const response = await fetchImpl('/plants', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(input)
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'plant_create_failed');
+      return payload.plant;
+    },
+
+    async updatePlant(id, input) {
+      const response = await fetchImpl(`/plants/${id}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(input)
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'plant_update_failed');
+      return payload.plant;
+    },
+
+    async deletePlant(id) {
+      const response = await fetchImpl(`/plants/${id}`, { method: 'DELETE', credentials: 'include' });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'plant_delete_failed');
+      return payload;
+    }
+  };
+}
+
 export function createAuthService(fetchImpl = fetch) {
   return {
     async login({ email, password }) {
@@ -76,4 +118,5 @@ export function createAuthService(fetchImpl = fetch) {
 }
 
 export const summaryService = createSummaryService();
+export const plantService = createPlantService();
 export const authService = createAuthService();

@@ -279,4 +279,55 @@ describe('worker index', () => {
     expect(body.ok).toBe(true);
     expect(body.event.type).toBe('water');
   });
+
+  test('update plant endpoint updates owner-scoped record', async () => {
+    const db = {
+      prepare(sql) {
+        if (sql.startsWith('UPDATE plants SET')) {
+          return {
+            bind() {
+              return { run: async () => ({ meta: { changes: 1 } }) };
+            }
+          };
+        }
+        throw new Error('unexpected sql');
+      }
+    };
+
+    const res = await worker.fetch(
+      new Request('http://local/plants/p1', {
+        method: 'PUT',
+        headers: { cookie: userCookie() },
+        body: JSON.stringify({ nickname: 'Updated Pothos' })
+      }),
+      { DB: db }
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.plant.nickname).toBe('Updated Pothos');
+  });
+
+  test('delete plant endpoint deletes owner-scoped record', async () => {
+    const db = {
+      prepare(sql) {
+        if (sql.startsWith('DELETE FROM plants')) {
+          return {
+            bind() {
+              return { run: async () => ({ meta: { changes: 1 } }) };
+            }
+          };
+        }
+        throw new Error('unexpected sql');
+      }
+    };
+
+    const res = await worker.fetch(new Request('http://local/plants/p1', { method: 'DELETE', headers: { cookie: userCookie() } }), {
+      DB: db
+    });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toEqual({ ok: true });
+  });
 });
