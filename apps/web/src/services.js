@@ -138,6 +138,20 @@ export function createAuthService(fetchImpl = fetch) {
       }
 
       return response.json();
+    },
+
+    async createUser({ email, password, role = 'user' }) {
+      const response = await fetchImpl(apiUrl('/admin/users'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, password, role })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || 'user_create_failed');
+      }
+      return payload.user;
     }
   };
 }

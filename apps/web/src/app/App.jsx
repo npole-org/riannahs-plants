@@ -16,6 +16,10 @@ export function App({ summaryService, authService, plantService }) {
   const [nextWaterOn, setNextWaterOn] = useState('');
   const [nextRepotOn, setNextRepotOn] = useState('');
   const [eventHistory, setEventHistory] = useState([]);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState('user');
+  const [createdUserEmail, setCreatedUserEmail] = useState('');
 
   async function loadDashboardData() {
     const [nextSummary, nextPlants] = await Promise.all([summaryService.getSummary(), plantService.listPlants()]);
@@ -63,6 +67,10 @@ export function App({ summaryService, authService, plantService }) {
     setPlants([]);
     setSelectedPlantId('');
     setEventHistory([]);
+    setCreatedUserEmail('');
+    setNewUserEmail('');
+    setNewUserPassword('');
+    setNewUserRole('user');
   }
 
   async function onAddPlant(event) {
@@ -111,6 +119,26 @@ export function App({ summaryService, authService, plantService }) {
     await loadDashboardData();
   }
 
+  async function onCreateUser(event) {
+    event.preventDefault();
+    setError('');
+    setCreatedUserEmail('');
+
+    try {
+      const createdUser = await authService.createUser({
+        email: newUserEmail.trim(),
+        password: newUserPassword,
+        role: newUserRole
+      });
+      setCreatedUserEmail(createdUser.email);
+      setNewUserEmail('');
+      setNewUserPassword('');
+      setNewUserRole('user');
+    } catch (createUserError) {
+      setError(createUserError.message || 'user_create_failed');
+    }
+  }
+
   return (
     <main style={{ fontFamily: 'system-ui', margin: '2rem auto', maxWidth: 720 }}>
       <h1>riannah's plants</h1>
@@ -140,6 +168,36 @@ export function App({ summaryService, authService, plantService }) {
       ) : (
         <>
           <p>Signed in as {role}.</p>
+          {role === 'admin' ? (
+            <section aria-label="admin-create-user">
+              <h2>Create user</h2>
+              <form onSubmit={onCreateUser}>
+                <label>
+                  User email
+                  <input type="email" value={newUserEmail} onChange={(event) => setNewUserEmail(event.target.value)} required />
+                </label>
+                <label>
+                  Temporary password
+                  <input
+                    type="password"
+                    value={newUserPassword}
+                    onChange={(event) => setNewUserPassword(event.target.value)}
+                    minLength={12}
+                    required
+                  />
+                </label>
+                <label>
+                  Role
+                  <select value={newUserRole} onChange={(event) => setNewUserRole(event.target.value)}>
+                    <option value="user">user</option>
+                    <option value="admin">admin</option>
+                  </select>
+                </label>
+                <button type="submit">Create user</button>
+              </form>
+              {createdUserEmail ? <p>Created user: {createdUserEmail}</p> : null}
+            </section>
+          ) : null}
           <section aria-label="dashboard-summary">
             <p>Total plants: {summary.plants}</p>
             <p>Due today: {summary.dueToday}</p>

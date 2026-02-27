@@ -194,4 +194,32 @@ describe('authService', () => {
     const authService = createAuthService(fetchImpl);
     await expect(authService.logout()).rejects.toThrow('logout_failed');
   });
+
+  test('creates a user through admin endpoint', async () => {
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ ok: true, user: { id: 'u1', email: 'user@example.com', role: 'user' } })
+    }));
+    const authService = createAuthService(fetchImpl);
+
+    await expect(authService.createUser({ email: 'user@example.com', password: '123456789012' })).resolves.toEqual({
+      id: 'u1',
+      email: 'user@example.com',
+      role: 'user'
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith('/admin/users', expect.objectContaining({ method: 'POST' }));
+  });
+
+  test('throws payload error on create user failure', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, json: async () => ({ error: 'email_exists' }) }));
+    const authService = createAuthService(fetchImpl);
+    await expect(authService.createUser({ email: 'user@example.com', password: '123456789012' })).rejects.toThrow('email_exists');
+  });
+
+  test('uses default create user failure message', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, json: async () => ({}) }));
+    const authService = createAuthService(fetchImpl);
+    await expect(authService.createUser({ email: 'user@example.com', password: '123456789012' })).rejects.toThrow('user_create_failed');
+  });
 });
