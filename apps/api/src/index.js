@@ -2,6 +2,8 @@ import { createHealthHandler } from './health.js';
 import { json } from './http/json.js';
 import { loginHandler, logoutHandler } from './auth/login.js';
 import { createUsersRepo } from './db/users.js';
+import { createUserHandler } from './auth/admin.js';
+import { readSessionFromCookie } from './auth/session.js';
 
 const health = createHealthHandler();
 
@@ -34,12 +36,21 @@ export default {
       return json(200, await checkDatabase(env.DB));
     }
 
+    const usersRepo = createUsersRepo(env.DB);
+
     if (url.pathname === '/auth/login' && request.method === 'POST') {
-      return loginHandler(request, { usersRepo: createUsersRepo(env.DB) });
+      return loginHandler(request, { usersRepo });
     }
 
     if (url.pathname === '/auth/logout' && request.method === 'POST') {
       return logoutHandler();
+    }
+
+    if (url.pathname === '/admin/users' && request.method === 'POST') {
+      return createUserHandler(request, {
+        usersRepo,
+        session: readSessionFromCookie(request.headers.get('cookie'))
+      });
     }
 
     return notFound();
