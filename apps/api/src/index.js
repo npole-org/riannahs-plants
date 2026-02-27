@@ -6,6 +6,8 @@ import { createUserHandler } from './auth/admin.js';
 import { readSessionFromCookie } from './auth/session.js';
 import { createPlantsRepo } from './db/plants.js';
 import { createPlantHandler, listPlantsHandler } from './plants/handlers.js';
+import { createScheduleRepo } from './db/schedule.js';
+import { dueTasksHandler, recordPlantEventHandler } from './schedule/handlers.js';
 
 const health = createHealthHandler();
 
@@ -40,6 +42,7 @@ export default {
 
     const usersRepo = createUsersRepo(env.DB);
     const plantsRepo = createPlantsRepo(env.DB);
+    const scheduleRepo = createScheduleRepo(env.DB);
     const session = readSessionFromCookie(request.headers.get('cookie'));
 
     if (url.pathname === '/auth/login' && request.method === 'POST') {
@@ -60,6 +63,19 @@ export default {
 
     if (url.pathname === '/plants' && request.method === 'POST') {
       return createPlantHandler(request, { plantsRepo, session });
+    }
+
+    if (url.pathname === '/tasks/due' && request.method === 'GET') {
+      return dueTasksHandler({ scheduleRepo, session });
+    }
+
+    const plantEventMatch = url.pathname.match(/^\/plants\/([^/]+)\/events$/);
+    if (plantEventMatch && request.method === 'POST') {
+      return recordPlantEventHandler(request, {
+        scheduleRepo,
+        session,
+        plantId: plantEventMatch[1]
+      });
     }
 
     return notFound();

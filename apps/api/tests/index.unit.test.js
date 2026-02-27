@@ -218,4 +218,65 @@ describe('worker index', () => {
     expect(body.plant.nickname).toBe('Pothos');
     expect(body.plant.owner_user_id).toBe('user1');
   });
+
+  test('tasks due endpoint returns due tasks for authenticated user', async () => {
+    const db = {
+      prepare(sql) {
+        if (!sql.includes('FROM plants')) throw new Error('unexpected sql');
+        return {
+          bind() {
+            return {
+              all: async () => ({
+                results: [{ id: 'p1', nickname: 'Monstera', next_water_on: '2026-02-27', next_repot_on: null }]
+              })
+            };
+          }
+        };
+      }
+    };
+
+    const res = await worker.fetch(new Request('http://local/tasks/due', { headers: { cookie: userCookie() } }), { DB: db });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.tasks).toHaveLength(1);
+  });
+
+  test('plant event endpoint records watering event', async () => {
+    const db = {
+      prepare(sql) {
+        if (sql.startsWith('INSERT INTO plant_events')) {
+          return {
+            bind() {
+              return { run: async () => ({ success: true }) };
+            }
+          };
+        }
+
+        if (sql.startsWith('UPDATE plants SET next_water_on')) {
+          return {
+            bind() {
+              return { run: async () => ({ meta: { changes: 1 } }) };
+            }
+          };
+        }
+
+        throw new Error('unexpected sql');
+      }
+    };
+
+    const res = await worker.fetch(
+      new Request('http://local/plants/p1/events', {
+        method: 'POST',
+        headers: { cookie: userCookie() },
+        body: JSON.stringify({ type: 'water', occurred_on: '2026-02-27', next_due_on: '2026-03-05' })
+      }),
+      { DB: db }
+    );
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.event.type).toBe('water');
+  });
 });

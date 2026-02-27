@@ -15,6 +15,20 @@ CREATE TABLE IF NOT EXISTS plants (
   species_scientific TEXT,
   acquired_on TEXT,
   notes TEXT,
+  next_water_on TEXT,
+  next_repot_on TEXT,
   created_at TEXT NOT NULL,
+  FOREIGN KEY(owner_user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS plant_events (
+  id TEXT PRIMARY KEY,
+  plant_id TEXT NOT NULL,
+  owner_user_id TEXT NOT NULL,
+  type TEXT NOT NULL CHECK(type IN ('water','repot')),
+  occurred_on TEXT NOT NULL,
+  next_due_on TEXT,
+  created_at TEXT NOT NULL,
+  FOREIGN KEY(plant_id) REFERENCES plants(id),
   FOREIGN KEY(owner_user_id) REFERENCES users(id)
 );
