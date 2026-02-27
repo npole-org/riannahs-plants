@@ -80,6 +80,25 @@ export function createPlantService(fetchImpl = fetch) {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || 'plant_delete_failed');
       return payload;
+    },
+
+    async configureSchedule(id, { next_water_on, next_repot_on }) {
+      const response = await fetchImpl(`/plants/${id}/schedule`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ next_water_on, next_repot_on })
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'schedule_config_failed');
+      return payload.schedule;
+    },
+
+    async listEvents(id) {
+      const response = await fetchImpl(`/plants/${id}/events`, { method: 'GET', credentials: 'include' });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'event_history_failed');
+      return payload.events || [];
     }
   };
 }

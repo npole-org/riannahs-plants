@@ -7,7 +7,7 @@ import { readSessionFromCookie } from './auth/session.js';
 import { createPlantsRepo } from './db/plants.js';
 import { createPlantHandler, deletePlantHandler, listPlantsHandler, updatePlantHandler } from './plants/handlers.js';
 import { createScheduleRepo } from './db/schedule.js';
-import { dueTasksHandler, recordPlantEventHandler } from './schedule/handlers.js';
+import { configureScheduleHandler, dueTasksHandler, plantEventHistoryHandler, recordPlantEventHandler } from './schedule/handlers.js';
 
 const health = createHealthHandler();
 
@@ -84,6 +84,23 @@ export default {
         scheduleRepo,
         session,
         plantId: plantEventMatch[1]
+      });
+    }
+
+    if (plantEventMatch && request.method === 'GET') {
+      return plantEventHistoryHandler({
+        scheduleRepo,
+        session,
+        plantId: plantEventMatch[1]
+      });
+    }
+
+    const plantScheduleMatch = url.pathname.match(/^\/plants\/([^/]+)\/schedule$/);
+    if (plantScheduleMatch && request.method === 'PUT') {
+      return configureScheduleHandler(request, {
+        scheduleRepo,
+        session,
+        plantId: plantScheduleMatch[1]
       });
     }
 

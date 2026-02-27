@@ -19,3 +19,18 @@ export function parseRecordPlantEventInput(body) {
 
   return { type, occurred_on, next_due_on };
 }
+
+export function parseScheduleConfigInput(body) {
+  if (!body || typeof body !== 'object') {
+    throw new Error('invalid_body');
+  }
+
+  const next_water_on = body.next_water_on == null ? null : String(body.next_water_on).trim();
+  const next_repot_on = body.next_repot_on == null ? null : String(body.next_repot_on).trim();
+
+  if (!next_water_on && !next_repot_on) {
+    throw new Error('missing_schedule_fields');
+  }
+
+  return { next_water_on, next_repot_on };
+}

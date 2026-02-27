@@ -5,6 +5,8 @@ describe('schedule repo', () => {
   test('throws when db is missing', async () => {
     const repo = createScheduleRepo(null);
     await expect(repo.listDueTasksByOwner('u1', '2026-02-27')).rejects.toThrow('db_not_bound');
+    await expect(repo.listPlantEvents({ plantId: 'p1', ownerUserId: 'u1' })).rejects.toThrow('db_not_bound');
+    await expect(repo.configurePlantSchedule({ plantId: 'p1', ownerUserId: 'u1' })).rejects.toThrow('db_not_bound');
   });
 
   test('recordPlantEvent throws when plant update affects zero rows', async () => {
@@ -35,6 +37,38 @@ describe('schedule repo', () => {
         occurredOn: '2026-02-27',
         nextDueOn: '2026-03-05'
       })
+    ).rejects.toThrow('plant_not_found');
+  });
+
+  test('lists plant events', async () => {
+    const db = {
+      prepare() {
+        return {
+          bind() {
+            return { all: async () => ({ results: [{ id: 'e1', type: 'water' }] }) };
+          }
+        };
+      }
+    };
+
+    const repo = createScheduleRepo(db);
+    await expect(repo.listPlantEvents({ plantId: 'p1', ownerUserId: 'u1' })).resolves.toEqual([{ id: 'e1', type: 'water' }]);
+  });
+
+  test('configurePlantSchedule throws when plant not found', async () => {
+    const db = {
+      prepare() {
+        return {
+          bind() {
+            return { run: async () => ({ meta: { changes: 0 } }) };
+          }
+        };
+      }
+    };
+
+    const repo = createScheduleRepo(db);
+    await expect(
+      repo.configurePlantSchedule({ plantId: 'p1', ownerUserId: 'u1', nextWaterOn: '2026-03-01', nextRepotOn: null })
     ).rejects.toThrow('plant_not_found');
   });
 });
