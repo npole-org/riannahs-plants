@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
+const EMPTY_SUMMARY = { plants: 0, dueToday: 0, upcoming: 0, tasks: [] };
+
 export function App({ summaryService, authService }) {
-  const [summary, setSummary] = useState({ plants: 0, dueToday: 0 });
+  const [summary, setSummary] = useState(EMPTY_SUMMARY);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(null);
@@ -16,11 +18,18 @@ export function App({ summaryService, authService }) {
       };
     }
 
-    summaryService.getSummary().then((result) => {
-      if (active) {
-        setSummary(result);
-      }
-    });
+    summaryService
+      .getSummary()
+      .then((result) => {
+        if (active) {
+          setSummary(result);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setError('dashboard_load_failed');
+        }
+      });
 
     return () => {
       active = false;
@@ -43,7 +52,7 @@ export function App({ summaryService, authService }) {
   async function onLogout() {
     await authService.logout();
     setRole(null);
-    setSummary({ plants: 0, dueToday: 0 });
+    setSummary(EMPTY_SUMMARY);
   }
 
   return (
@@ -78,7 +87,23 @@ export function App({ summaryService, authService }) {
           <section aria-label="dashboard-summary">
             <p>Total plants: {summary.plants}</p>
             <p>Due today: {summary.dueToday}</p>
+            <p>Upcoming: {summary.upcoming}</p>
           </section>
+          <section aria-label="dashboard-due-list">
+            <h2>Due tasks</h2>
+            {summary.tasks.length === 0 ? (
+              <p>No tasks due.</p>
+            ) : (
+              <ul>
+                {summary.tasks.map((task) => (
+                  <li key={`${task.plant_id}:${task.type}`}>
+                    {task.nickname} · {task.type} · {task.due_on}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          {error ? <p role="alert">{error}</p> : null}
           <button onClick={onLogout} type="button">
             Sign out
           </button>

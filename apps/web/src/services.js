@@ -1,7 +1,43 @@
-export function createSummaryService() {
+function classifyTasks(tasks = [], todayIsoDate = new Date().toISOString().slice(0, 10)) {
+  let dueToday = 0;
+  let upcoming = 0;
+
+  for (const task of tasks) {
+    if (!task?.due_on) continue;
+    if (task.due_on <= todayIsoDate) {
+      dueToday += 1;
+    } else {
+      upcoming += 1;
+    }
+  }
+
+  return { dueToday, upcoming };
+}
+
+export function createSummaryService(fetchImpl = fetch) {
   return {
     async getSummary() {
-      return { plants: 0, dueToday: 0 };
+      const [plantsResponse, dueResponse] = await Promise.all([
+        fetchImpl('/plants', { method: 'GET', credentials: 'include' }),
+        fetchImpl('/tasks/due', { method: 'GET', credentials: 'include' })
+      ]);
+
+      const plantsPayload = await plantsResponse.json();
+      const duePayload = await dueResponse.json();
+
+      if (!plantsResponse.ok || !dueResponse.ok) {
+        throw new Error('dashboard_load_failed');
+      }
+
+      const tasks = duePayload.tasks || [];
+      const buckets = classifyTasks(tasks);
+
+      return {
+        plants: (plantsPayload.plants || []).length,
+        dueToday: buckets.dueToday,
+        upcoming: buckets.upcoming,
+        tasks
+      };
     }
   };
 }
