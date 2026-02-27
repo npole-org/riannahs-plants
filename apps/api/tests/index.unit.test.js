@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'vitest';
 import { hashPassword } from '../src/core/password.js';
 import worker from '../src/index.js';
+import { toBase64Url } from '../src/auth/session.js';
+
+function adminCookie() {
+  const session = JSON.stringify({ userId: 'admin1', role: 'admin', email: 'admin@example.com' });
+  return `rp_session=${toBase64Url(session)}`;
+}
 
 describe('worker index', () => {
   test('responds with health on /health', async () => {
@@ -84,5 +90,60 @@ describe('worker index', () => {
     const res = await worker.fetch(new Request('http://local/auth/logout', { method: 'POST' }), {});
     expect(res.status).toBe(200);
     expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
+  });
+
+  test('admin create-user endpoint enforces admin session', async () => {
+    const res = await worker.fetch(
+      new Request('http://local/admin/users', {
+        method: 'POST',
+        body: JSON.stringify({ email: 'user@example.com', password: '123456789012', role: 'user' })
+      }),
+      { DB: {} }
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  test('admin create-user endpoint creates user for admin session', async () => {
+    const db = {
+      prepare(sql) {
+        if (sql.startsWith('SELECT')) {
+          return {
+            bind() {
+              return {
+                first: async () => null
+              };
+            }
+          };
+        }
+
+        if (sql.startsWith('INSERT')) {
+          return {
+            bind() {
+              return {
+                run: async () => ({ success: true })
+              };
+            }
+          };
+        }
+
+        throw new Error('unexpected sql');
+      }
+    };
+
+    const res = await worker.fetch(
+      new Request('http://local/admin/users', {
+        method: 'POST',
+        headers: { cookie: adminCookie() },
+        body: JSON.stringify({ email: 'user@example.com', password: '123456789012', role: 'user' })
+      }),
+      { DB: db }
+    );
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.user.email).toBe('user@example.com');
+    expect(body.user.role).toBe('user');
   });
 });
