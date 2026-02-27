@@ -15,43 +15,40 @@ jobs:
     outputs:
       api_base_url: ${{ steps.resolve-url.outputs.api_base_url }}
     env:
-      WORKER_NAME: riannahs-plants-api
       WORKER_ENV: ${{ github.ref_name == 'main' && 'production' || '' }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Resolve Worker URL
-        id: resolve-url
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          subdomain=$(curl -fsS "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain" \
-            -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-            -H "Content-Type: application/json" | jq -r '.result.subdomain')
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-          if [ -z "$subdomain" ] || [ "$subdomain" = "null" ]; then
-            echo "Unable to resolve workers.dev subdomain for account $CLOUDFLARE_ACCOUNT_ID"
-            exit 1
+      - name: Deploy API worker and capture URL
+        id: resolve-url
+        run: |
+          npm install -g wrangler@4
+
+          deploy_cmd=(wrangler deploy --config=apps/api/wrangler.toml)
+          if [ -n "$WORKER_ENV" ]; then
+            deploy_cmd+=(--env "$WORKER_ENV")
           fi
 
-          if [ -n "$WORKER_ENV" ]; then
-            api_base_url="https://$WORKER_ENV.$WORKER_NAME.$subdomain.workers.dev"
-          else
-            api_base_url="https://$WORKER_NAME.$subdomain.workers.dev"
+          deploy_output="$(${deploy_cmd[@]} 2>&1 | tee /tmp/wrangler-deploy.log)"
+          api_base_url=$(echo "$deploy_output" | grep -Eo 'https://[a-zA-Z0-9._-]+\.workers\.dev' | head -n 1)
+
+          if [ -z "$api_base_url" ]; then
+            echo "Failed to detect workers.dev URL from wrangler deploy output"
+            echo "--- wrangler output ---"
+            cat /tmp/wrangler-deploy.log
+            exit 1
           fi
 
           echo "api_base_url=$api_base_url" >> "$GITHUB_OUTPUT"
           echo "Using API base URL host: $api_base_url"
-
-      - name: Deploy API worker
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config=apps/api/wrangler.toml ${{ github.ref_name == 'main' && '--env production' || '' }}
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     needs: deploy-api
