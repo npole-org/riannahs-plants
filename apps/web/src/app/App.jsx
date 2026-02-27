@@ -2,12 +2,22 @@ import React, { useEffect, useState } from 'react';
 
 const EMPTY_SUMMARY = { plants: 0, dueToday: 0, upcoming: 0, tasks: [] };
 
-export function App({ summaryService, authService }) {
+export function App({ summaryService, authService, plantService }) {
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
+  const [plants, setPlants] = useState([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(null);
   const [error, setError] = useState('');
+  const [newPlantNickname, setNewPlantNickname] = useState('');
+  const [editingId, setEditingId] = useState(null);
+  const [editingNickname, setEditingNickname] = useState('');
+
+  async function loadDashboardData() {
+    const [nextSummary, nextPlants] = await Promise.all([summaryService.getSummary(), plantService.listPlants()]);
+    setSummary(nextSummary);
+    setPlants(nextPlants);
+  }
 
   useEffect(() => {
     let active = true;
@@ -18,23 +28,16 @@ export function App({ summaryService, authService }) {
       };
     }
 
-    summaryService
-      .getSummary()
-      .then((result) => {
-        if (active) {
-          setSummary(result);
-        }
-      })
-      .catch(() => {
-        if (active) {
-          setError('dashboard_load_failed');
-        }
-      });
+    loadDashboardData().catch(() => {
+      if (active) {
+        setError('dashboard_load_failed');
+      }
+    });
 
     return () => {
       active = false;
     };
-  }, [summaryService, role]);
+  }, [role]);
 
   async function onLogin(event) {
     event.preventDefault();
@@ -53,6 +56,33 @@ export function App({ summaryService, authService }) {
     await authService.logout();
     setRole(null);
     setSummary(EMPTY_SUMMARY);
+    setPlants([]);
+  }
+
+  async function onAddPlant(event) {
+    event.preventDefault();
+    if (!newPlantNickname.trim()) return;
+
+    await plantService.createPlant({ nickname: newPlantNickname.trim() });
+    setNewPlantNickname('');
+    await loadDashboardData();
+  }
+
+  function startEdit(plant) {
+    setEditingId(plant.id);
+    setEditingNickname(plant.nickname);
+  }
+
+  async function saveEdit(plantId) {
+    await plantService.updatePlant(plantId, { nickname: editingNickname.trim() });
+    setEditingId(null);
+    setEditingNickname('');
+    await loadDashboardData();
+  }
+
+  async function removePlant(plantId) {
+    await plantService.deletePlant(plantId);
+    await loadDashboardData();
   }
 
   return (
@@ -98,6 +128,53 @@ export function App({ summaryService, authService }) {
                 {summary.tasks.map((task) => (
                   <li key={`${task.plant_id}:${task.type}`}>
                     {task.nickname} · {task.type} · {task.due_on}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          <section aria-label="plant-management">
+            <h2>Plants</h2>
+            <form onSubmit={onAddPlant}>
+              <label>
+                New plant nickname
+                <input value={newPlantNickname} onChange={(event) => setNewPlantNickname(event.target.value)} />
+              </label>
+              <button type="submit">Add plant</button>
+            </form>
+            {plants.length === 0 ? (
+              <p>No plants yet.</p>
+            ) : (
+              <ul>
+                {plants.map((plant) => (
+                  <li key={plant.id}>
+                    {editingId === plant.id ? (
+                      <>
+                        <input value={editingNickname} onChange={(event) => setEditingNickname(event.target.value)} />
+                        <button type="button" onClick={() => saveEdit(plant.id)}>
+                          Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingId(null);
+                            setEditingNickname('');
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <span>{plant.nickname}</span>
+                        <button type="button" onClick={() => startEdit(plant)}>
+                          Edit
+                        </button>
+                        <button type="button" onClick={() => removePlant(plant.id)}>
+                          Delete
+                        </button>
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>

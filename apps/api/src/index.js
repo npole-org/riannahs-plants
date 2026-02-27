@@ -5,7 +5,7 @@ import { createUsersRepo } from './db/users.js';
 import { createUserHandler } from './auth/admin.js';
 import { readSessionFromCookie } from './auth/session.js';
 import { createPlantsRepo } from './db/plants.js';
-import { createPlantHandler, listPlantsHandler } from './plants/handlers.js';
+import { createPlantHandler, deletePlantHandler, listPlantsHandler, updatePlantHandler } from './plants/handlers.js';
 import { createScheduleRepo } from './db/schedule.js';
 import { dueTasksHandler, recordPlantEventHandler } from './schedule/handlers.js';
 
@@ -63,6 +63,15 @@ export default {
 
     if (url.pathname === '/plants' && request.method === 'POST') {
       return createPlantHandler(request, { plantsRepo, session });
+    }
+
+    const plantMatch = url.pathname.match(/^\/plants\/([^/]+)$/);
+    if (plantMatch && request.method === 'PUT') {
+      return updatePlantHandler(request, { plantsRepo, session, plantId: plantMatch[1] });
+    }
+
+    if (plantMatch && request.method === 'DELETE') {
+      return deletePlantHandler({ plantsRepo, session, plantId: plantMatch[1] });
     }
 
     if (url.pathname === '/tasks/due' && request.method === 'GET') {
