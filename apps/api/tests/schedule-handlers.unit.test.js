@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { dueTasksHandler, recordPlantEventHandler } from '../src/schedule/handlers.js';
+import { configureScheduleHandler, dueTasksHandler, plantEventHistoryHandler, recordPlantEventHandler } from '../src/schedule/handlers.js';
 
 describe('schedule handlers', () => {
   test('due tasks requires auth', async () => {
@@ -71,5 +71,57 @@ describe('schedule handlers', () => {
     });
 
     expect(res.status).toBe(404);
+  });
+
+  test('event history requires auth', async () => {
+    const res = await plantEventHistoryHandler({ scheduleRepo: {}, session: null, plantId: 'p1' });
+    expect(res.status).toBe(401);
+  });
+
+  test('event history returns owner events', async () => {
+    const scheduleRepo = {
+      listPlantEvents: async () => [{ id: 'e1', type: 'water' }]
+    };
+
+    const res = await plantEventHistoryHandler({ scheduleRepo, session: { userId: 'u1' }, plantId: 'p1' });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.events).toHaveLength(1);
+  });
+
+  test('configure schedule rejects invalid json', async () => {
+    const req = new Request('http://local/plants/p1/schedule', { method: 'PUT', body: '{' });
+    const res = await configureScheduleHandler(req, { scheduleRepo: {}, session: { userId: 'u1' }, plantId: 'p1' });
+    expect(res.status).toBe(400);
+  });
+
+  test('configure schedule handles plant not found', async () => {
+    const scheduleRepo = {
+      configurePlantSchedule: async () => {
+        throw new Error('plant_not_found');
+      }
+    };
+
+    const req = new Request('http://local/plants/p1/schedule', {
+      method: 'PUT',
+      body: JSON.stringify({ next_water_on: '2026-03-01' })
+    });
+
+    const res = await configureScheduleHandler(req, { scheduleRepo, session: { userId: 'u1' }, plantId: 'p1' });
+    expect(res.status).toBe(404);
+  });
+
+  test('configure schedule updates due fields', async () => {
+    const scheduleRepo = {
+      configurePlantSchedule: async () => ({ plant_id: 'p1', next_water_on: '2026-03-01', next_repot_on: null })
+    };
+
+    const req = new Request('http://local/plants/p1/schedule', {
+      method: 'PUT',
+      body: JSON.stringify({ next_water_on: '2026-03-01' })
+    });
+
+    const res = await configureScheduleHandler(req, { scheduleRepo, session: { userId: 'u1' }, plantId: 'p1' });
+    expect(res.status).toBe(200);
   });
 });

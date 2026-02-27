@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { App } from './App';
 
 describe('App', () => {
-  test('supports add/edit/delete plant management after login', async () => {
+  test('supports plant management + schedule/history workflows after login', async () => {
     let plants = [{ id: 'p1', nickname: 'Monstera' }];
 
     const summaryService = {
@@ -22,7 +22,9 @@ describe('App', () => {
       deletePlant: async (id) => {
         plants = plants.filter((p) => p.id !== id);
         return { ok: true };
-      }
+      },
+      listEvents: async () => [{ id: 'e1', type: 'water', occurred_on: '2026-02-27' }],
+      configureSchedule: async () => ({ plant_id: 'p1', next_water_on: '2026-03-01', next_repot_on: null })
     };
 
     const authService = {
@@ -46,6 +48,12 @@ describe('App', () => {
     fireEvent.change(screen.getByDisplayValue('Monstera'), { target: { value: 'Monstera Prime' } });
     fireEvent.click(screen.getByText('Save'));
     expect(await screen.findByText('Monstera Prime')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByText('History')[0]);
+    expect(await screen.findByText('water · 2026-02-27')).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Next water on'), { target: { value: '2026-03-01' } });
+    fireEvent.click(screen.getByText('Save schedule'));
 
     fireEvent.click(screen.getAllByText('Delete')[0]);
     expect(await screen.findByText('Total plants: 1')).toBeInTheDocument();

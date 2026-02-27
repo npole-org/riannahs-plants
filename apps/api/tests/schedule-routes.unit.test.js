@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { parseRecordPlantEventInput } from '../src/routes/schedule.js';
+import { parseRecordPlantEventInput, parseScheduleConfigInput } from '../src/routes/schedule.js';
 
 describe('parseRecordPlantEventInput', () => {
   test('parses valid event payload', () => {
@@ -20,5 +20,15 @@ describe('parseRecordPlantEventInput', () => {
 
   test('rejects missing occurred_on', () => {
     expect(() => parseRecordPlantEventInput({ type: 'water', occurred_on: '   ' })).toThrow('missing_occurred_on');
+  });
+});
+
+describe('parseScheduleConfigInput', () => {
+  test('parses schedule payload', () => {
+    expect(parseScheduleConfigInput({ next_water_on: '2026-03-01' })).toEqual({ next_water_on: '2026-03-01', next_repot_on: null });
+  });
+
+  test('rejects missing fields', () => {
+    expect(() => parseScheduleConfigInput({})).toThrow('missing_schedule_fields');
   });
 });

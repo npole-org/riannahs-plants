@@ -330,4 +330,57 @@ describe('worker index', () => {
     expect(res.status).toBe(200);
     await expect(res.json()).resolves.toEqual({ ok: true });
   });
+
+  test('plant events history endpoint lists events', async () => {
+    const db = {
+      prepare(sql) {
+        if (sql.startsWith('SELECT id, plant_id, type')) {
+          return {
+            bind() {
+              return { all: async () => ({ results: [{ id: 'e1', type: 'water' }] }) };
+            }
+          };
+        }
+        throw new Error('unexpected sql');
+      }
+    };
+
+    const res = await worker.fetch(new Request('http://local/plants/p1/events', { method: 'GET', headers: { cookie: userCookie() } }), {
+      DB: db
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.events).toHaveLength(1);
+  });
+
+  test('plant schedule config endpoint updates due dates', async () => {
+    const db = {
+      prepare(sql) {
+        if (sql.startsWith('UPDATE plants SET next_water_on')) {
+          return {
+            bind() {
+              return { run: async () => ({ meta: { changes: 1 } }) };
+            }
+          };
+        }
+        throw new Error('unexpected sql');
+      }
+    };
+
+    const res = await worker.fetch(
+      new Request('http://local/plants/p1/schedule', {
+        method: 'PUT',
+        headers: { cookie: userCookie() },
+        body: JSON.stringify({ next_water_on: '2026-03-03' })
+      }),
+      { DB: db }
+    );
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.schedule.next_water_on).toBe('2026-03-03');
+  });
 });

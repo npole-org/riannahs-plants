@@ -1,5 +1,5 @@
 import { json } from '../http/json.js';
-import { parseRecordPlantEventInput } from '../routes/schedule.js';
+import { parseRecordPlantEventInput, parseScheduleConfigInput } from '../routes/schedule.js';
 
 function requireSession(session) {
   if (!session?.userId) {
@@ -62,6 +62,54 @@ export async function recordPlantEventHandler(request, { scheduleRepo, session, 
     });
 
     return json(201, { ok: true, event });
+  } catch (error) {
+    if (error.message === 'plant_not_found') {
+      return json(404, { ok: false, error: 'plant_not_found' });
+    }
+    throw error;
+  }
+}
+
+export async function plantEventHistoryHandler({ scheduleRepo, session, plantId }) {
+  try {
+    requireSession(session);
+  } catch {
+    return json(401, { ok: false, error: 'unauthorized' });
+  }
+
+  const events = await scheduleRepo.listPlantEvents({ plantId, ownerUserId: session.userId });
+  return json(200, { ok: true, events });
+}
+
+export async function configureScheduleHandler(request, { scheduleRepo, session, plantId }) {
+  try {
+    requireSession(session);
+  } catch {
+    return json(401, { ok: false, error: 'unauthorized' });
+  }
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json(400, { ok: false, error: 'invalid_json' });
+  }
+
+  let input;
+  try {
+    input = parseScheduleConfigInput(payload);
+  } catch (error) {
+    return json(400, { ok: false, error: error.message || 'invalid_body' });
+  }
+
+  try {
+    const schedule = await scheduleRepo.configurePlantSchedule({
+      plantId,
+      ownerUserId: session.userId,
+      nextWaterOn: input.next_water_on,
+      nextRepotOn: input.next_repot_on
+    });
+    return json(200, { ok: true, schedule });
   } catch (error) {
     if (error.message === 'plant_not_found') {
       return json(404, { ok: false, error: 'plant_not_found' });

@@ -124,6 +124,30 @@ describe('plantService', () => {
     const plantService = createPlantService(fetchImpl);
     await expect(plantService.deletePlant('p1')).rejects.toThrow('plant_delete_failed');
   });
+
+  test('configures schedule', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: true, json: async () => ({ schedule: { plant_id: 'p1' } }) }));
+    const plantService = createPlantService(fetchImpl);
+    await expect(plantService.configureSchedule('p1', { next_water_on: '2026-03-01' })).resolves.toEqual({ plant_id: 'p1' });
+  });
+
+  test('lists event history', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: true, json: async () => ({ events: [{ id: 'e1' }] }) }));
+    const plantService = createPlantService(fetchImpl);
+    await expect(plantService.listEvents('p1')).resolves.toEqual([{ id: 'e1' }]);
+  });
+
+  test('uses default schedule config failure message', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, json: async () => ({}) }));
+    const plantService = createPlantService(fetchImpl);
+    await expect(plantService.configureSchedule('p1', {})).rejects.toThrow('schedule_config_failed');
+  });
+
+  test('uses default event history failure message', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, json: async () => ({}) }));
+    const plantService = createPlantService(fetchImpl);
+    await expect(plantService.listEvents('p1')).rejects.toThrow('event_history_failed');
+  });
 });
 
 describe('authService', () => {

@@ -12,6 +12,10 @@ export function App({ summaryService, authService, plantService }) {
   const [newPlantNickname, setNewPlantNickname] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editingNickname, setEditingNickname] = useState('');
+  const [selectedPlantId, setSelectedPlantId] = useState('');
+  const [nextWaterOn, setNextWaterOn] = useState('');
+  const [nextRepotOn, setNextRepotOn] = useState('');
+  const [eventHistory, setEventHistory] = useState([]);
 
   async function loadDashboardData() {
     const [nextSummary, nextPlants] = await Promise.all([summaryService.getSummary(), plantService.listPlants()]);
@@ -57,6 +61,8 @@ export function App({ summaryService, authService, plantService }) {
     setRole(null);
     setSummary(EMPTY_SUMMARY);
     setPlants([]);
+    setSelectedPlantId('');
+    setEventHistory([]);
   }
 
   async function onAddPlant(event) {
@@ -82,6 +88,26 @@ export function App({ summaryService, authService, plantService }) {
 
   async function removePlant(plantId) {
     await plantService.deletePlant(plantId);
+    if (selectedPlantId === plantId) {
+      setSelectedPlantId('');
+      setEventHistory([]);
+    }
+    await loadDashboardData();
+  }
+
+  async function loadHistory(plantId) {
+    const history = await plantService.listEvents(plantId);
+    setSelectedPlantId(plantId);
+    setEventHistory(history);
+  }
+
+  async function saveSchedule(event) {
+    event.preventDefault();
+    if (!selectedPlantId) return;
+    await plantService.configureSchedule(selectedPlantId, {
+      next_water_on: nextWaterOn || null,
+      next_repot_on: nextRepotOn || null
+    });
     await loadDashboardData();
   }
 
@@ -138,7 +164,7 @@ export function App({ summaryService, authService, plantService }) {
             <form onSubmit={onAddPlant}>
               <label>
                 New plant nickname
-                <input value={newPlantNickname} onChange={(event) => setNewPlantNickname(event.target.value)} />
+                <input aria-label="New plant nickname" value={newPlantNickname} onChange={(event) => setNewPlantNickname(event.target.value)} />
               </label>
               <button type="submit">Add plant</button>
             </form>
@@ -173,8 +199,40 @@ export function App({ summaryService, authService, plantService }) {
                         <button type="button" onClick={() => removePlant(plant.id)}>
                           Delete
                         </button>
+                        <button type="button" onClick={() => loadHistory(plant.id)}>
+                          History
+                        </button>
                       </>
                     )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          <section aria-label="schedule-config">
+            <h2>Schedule config</h2>
+            <p>Selected plant: {selectedPlantId || 'none'}</p>
+            <form onSubmit={saveSchedule}>
+              <label>
+                Next water on
+                <input type="date" value={nextWaterOn} onChange={(event) => setNextWaterOn(event.target.value)} />
+              </label>
+              <label>
+                Next repot on
+                <input type="date" value={nextRepotOn} onChange={(event) => setNextRepotOn(event.target.value)} />
+              </label>
+              <button type="submit">Save schedule</button>
+            </form>
+          </section>
+          <section aria-label="event-history">
+            <h2>Event history</h2>
+            {eventHistory.length === 0 ? (
+              <p>No events loaded.</p>
+            ) : (
+              <ul>
+                {eventHistory.map((eventItem) => (
+                  <li key={eventItem.id}>
+                    {eventItem.type} · {eventItem.occurred_on}
                   </li>
                 ))}
               </ul>
