@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from 'react';
 
-export function App({ summaryService }) {
+export function App({ summaryService, authService }) {
   const [summary, setSummary] = useState({ plants: 0, dueToday: 0 });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [role, setRole] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     let active = true;
+
+    if (!role) {
+      return () => {
+        active = false;
+      };
+    }
 
     summaryService.getSummary().then((result) => {
       if (active) {
@@ -15,16 +25,65 @@ export function App({ summaryService }) {
     return () => {
       active = false;
     };
-  }, [summaryService]);
+  }, [summaryService, role]);
+
+  async function onLogin(event) {
+    event.preventDefault();
+    setError('');
+
+    try {
+      const result = await authService.login({ email, password });
+      setRole(result.role);
+      setPassword('');
+    } catch (loginError) {
+      setError(loginError.message || 'login_failed');
+    }
+  }
+
+  async function onLogout() {
+    await authService.logout();
+    setRole(null);
+    setSummary({ plants: 0, dueToday: 0 });
+  }
 
   return (
     <main style={{ fontFamily: 'system-ui', margin: '2rem auto', maxWidth: 720 }}>
       <h1>riannah's plants</h1>
-      <p>Closed beta app bootstrap is live.</p>
-      <section aria-label="dashboard-summary">
-        <p>Total plants: {summary.plants}</p>
-        <p>Due today: {summary.dueToday}</p>
-      </section>
+      {!role ? (
+        <section aria-label="login-form">
+          <p>Sign in to continue.</p>
+          <form onSubmit={onLogin}>
+            <label>
+              Email
+              <input name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            </label>
+            <label>
+              Password
+              <input
+                name="password"
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                minLength={12}
+                required
+              />
+            </label>
+            <button type="submit">Sign in</button>
+          </form>
+          {error ? <p role="alert">{error}</p> : null}
+        </section>
+      ) : (
+        <>
+          <p>Signed in as {role}.</p>
+          <section aria-label="dashboard-summary">
+            <p>Total plants: {summary.plants}</p>
+            <p>Due today: {summary.dueToday}</p>
+          </section>
+          <button onClick={onLogout} type="button">
+            Sign out
+          </button>
+        </>
+      )}
     </main>
   );
 }
