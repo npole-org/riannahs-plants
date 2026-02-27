@@ -4,6 +4,8 @@ import { loginHandler, logoutHandler } from './auth/login.js';
 import { createUsersRepo } from './db/users.js';
 import { createUserHandler } from './auth/admin.js';
 import { readSessionFromCookie } from './auth/session.js';
+import { createPlantsRepo } from './db/plants.js';
+import { createPlantHandler, listPlantsHandler } from './plants/handlers.js';
 
 const health = createHealthHandler();
 
@@ -37,6 +39,8 @@ export default {
     }
 
     const usersRepo = createUsersRepo(env.DB);
+    const plantsRepo = createPlantsRepo(env.DB);
+    const session = readSessionFromCookie(request.headers.get('cookie'));
 
     if (url.pathname === '/auth/login' && request.method === 'POST') {
       return loginHandler(request, { usersRepo });
@@ -47,10 +51,15 @@ export default {
     }
 
     if (url.pathname === '/admin/users' && request.method === 'POST') {
-      return createUserHandler(request, {
-        usersRepo,
-        session: readSessionFromCookie(request.headers.get('cookie'))
-      });
+      return createUserHandler(request, { usersRepo, session });
+    }
+
+    if (url.pathname === '/plants' && request.method === 'GET') {
+      return listPlantsHandler({ plantsRepo, session });
+    }
+
+    if (url.pathname === '/plants' && request.method === 'POST') {
+      return createPlantHandler(request, { plantsRepo, session });
     }
 
     return notFound();

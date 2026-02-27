@@ -8,6 +8,11 @@ function adminCookie() {
   return `rp_session=${toBase64Url(session)}`;
 }
 
+function userCookie() {
+  const session = JSON.stringify({ userId: 'user1', role: 'user', email: 'user@example.com' });
+  return `rp_session=${toBase64Url(session)}`;
+}
+
 describe('worker index', () => {
   test('responds with health on /health', async () => {
     const res = await worker.fetch(new Request('http://local/health'), {});
@@ -145,5 +150,72 @@ describe('worker index', () => {
     expect(body.ok).toBe(true);
     expect(body.user.email).toBe('user@example.com');
     expect(body.user.role).toBe('user');
+  });
+
+  test('plants endpoints require auth', async () => {
+    const res = await worker.fetch(new Request('http://local/plants'), { DB: {} });
+    expect(res.status).toBe(401);
+  });
+
+  test('list plants returns scoped records', async () => {
+    const db = {
+      prepare(sql) {
+        if (!sql.startsWith('SELECT id, owner_user_id')) {
+          throw new Error('unexpected sql');
+        }
+
+        return {
+          bind(userId) {
+            expect(userId).toBe('user1');
+            return {
+              all: async () => ({
+                results: [{ id: 'p1', owner_user_id: 'user1', nickname: 'Monstera' }]
+              })
+            };
+          }
+        };
+      }
+    };
+
+    const res = await worker.fetch(new Request('http://local/plants', { headers: { cookie: userCookie() } }), { DB: db });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.plants).toHaveLength(1);
+  });
+
+  test('create plant persists owner-scoped record', async () => {
+    const db = {
+      prepare(sql) {
+        if (sql.startsWith('INSERT INTO plants')) {
+          return {
+            bind(...values) {
+              expect(values[1]).toBe('user1');
+              expect(values[2]).toBe('Pothos');
+              return {
+                run: async () => ({ success: true })
+              };
+            }
+          };
+        }
+
+        throw new Error('unexpected sql');
+      }
+    };
+
+    const res = await worker.fetch(
+      new Request('http://local/plants', {
+        method: 'POST',
+        headers: { cookie: userCookie() },
+        body: JSON.stringify({ nickname: 'Pothos' })
+      }),
+      { DB: db }
+    );
+
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.plant.nickname).toBe('Pothos');
+    expect(body.plant.owner_user_id).toBe('user1');
   });
 });
