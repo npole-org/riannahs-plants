@@ -1,3 +1,9 @@
+function apiUrl(path) {
+  const base = import.meta.env.VITE_API_BASE_URL;
+  if (!base) return path;
+  return `${String(base).replace(/\/$/, '')}${path}`;
+}
+
 function classifyTasks(tasks = [], todayIsoDate = new Date().toISOString().slice(0, 10)) {
   let dueToday = 0;
   let upcoming = 0;
@@ -18,8 +24,8 @@ export function createSummaryService(fetchImpl = fetch) {
   return {
     async getSummary() {
       const [plantsResponse, dueResponse] = await Promise.all([
-        fetchImpl('/plants', { method: 'GET', credentials: 'include' }),
-        fetchImpl('/tasks/due', { method: 'GET', credentials: 'include' })
+        fetchImpl(apiUrl('/plants'), { method: 'GET', credentials: 'include' }),
+        fetchImpl(apiUrl('/tasks/due'), { method: 'GET', credentials: 'include' })
       ]);
 
       const plantsPayload = await plantsResponse.json();
@@ -45,14 +51,14 @@ export function createSummaryService(fetchImpl = fetch) {
 export function createPlantService(fetchImpl = fetch) {
   return {
     async listPlants() {
-      const response = await fetchImpl('/plants', { method: 'GET', credentials: 'include' });
+      const response = await fetchImpl(apiUrl('/plants'), { method: 'GET', credentials: 'include' });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || 'plants_load_failed');
       return payload.plants || [];
     },
 
     async createPlant(input) {
-      const response = await fetchImpl('/plants', {
+      const response = await fetchImpl(apiUrl('/plants'), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         credentials: 'include',
@@ -64,7 +70,7 @@ export function createPlantService(fetchImpl = fetch) {
     },
 
     async updatePlant(id, input) {
-      const response = await fetchImpl(`/plants/${id}`, {
+      const response = await fetchImpl(apiUrl(`/plants/${id}`), {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         credentials: 'include',
@@ -76,14 +82,14 @@ export function createPlantService(fetchImpl = fetch) {
     },
 
     async deletePlant(id) {
-      const response = await fetchImpl(`/plants/${id}`, { method: 'DELETE', credentials: 'include' });
+      const response = await fetchImpl(apiUrl(`/plants/${id}`), { method: 'DELETE', credentials: 'include' });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || 'plant_delete_failed');
       return payload;
     },
 
     async configureSchedule(id, { next_water_on, next_repot_on }) {
-      const response = await fetchImpl(`/plants/${id}/schedule`, {
+      const response = await fetchImpl(apiUrl(`/plants/${id}/schedule`), {
         method: 'PUT',
         headers: { 'content-type': 'application/json' },
         credentials: 'include',
@@ -95,7 +101,7 @@ export function createPlantService(fetchImpl = fetch) {
     },
 
     async listEvents(id) {
-      const response = await fetchImpl(`/plants/${id}/events`, { method: 'GET', credentials: 'include' });
+      const response = await fetchImpl(apiUrl(`/plants/${id}/events`), { method: 'GET', credentials: 'include' });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || 'event_history_failed');
       return payload.events || [];
@@ -106,7 +112,7 @@ export function createPlantService(fetchImpl = fetch) {
 export function createAuthService(fetchImpl = fetch) {
   return {
     async login({ email, password }) {
-      const response = await fetchImpl('/auth/login', {
+      const response = await fetchImpl(apiUrl('/auth/login'), {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         credentials: 'include',
@@ -122,7 +128,7 @@ export function createAuthService(fetchImpl = fetch) {
     },
 
     async logout() {
-      const response = await fetchImpl('/auth/logout', {
+      const response = await fetchImpl(apiUrl('/auth/logout'), {
         method: 'POST',
         credentials: 'include'
       });
