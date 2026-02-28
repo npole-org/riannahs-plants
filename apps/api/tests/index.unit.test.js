@@ -472,6 +472,7 @@ describe('worker index', () => {
     expect(res.headers.get('Permissions-Policy')).toContain('language-model=()');
     expect(res.headers.get('Permissions-Policy')).toContain('otp-credentials=()');
     expect(res.headers.get('Permissions-Policy')).toContain('storage-access=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('web-app-installation=()');
     expect(res.headers.get('Permissions-Policy')).toContain('execution-while-not-rendered=()');
     expect(res.headers.get('Permissions-Policy')).toContain('execution-while-out-of-viewport=()');
     expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
