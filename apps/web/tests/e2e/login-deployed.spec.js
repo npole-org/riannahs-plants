@@ -1,4 +1,4 @@
-/* eslint-env node */
+/* global process */
 import { test, expect } from '@playwright/test';
 
 test('login endpoint is reachable from deployed app (no Pages 405)', async ({ page, request }) => {
