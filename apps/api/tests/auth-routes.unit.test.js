@@ -15,6 +15,14 @@ describe('auth route helpers', () => {
     expect(() => parseLoginInput({ email: '', password: '' })).toThrow('missing_credentials');
   });
 
+  test('parseLoginInput rejects invalid email', () => {
+    expect(() => parseLoginInput({ email: 'not-an-email', password: 'pw' })).toThrow('invalid_email');
+  });
+
+  test('parseLoginInput rejects excessive password length', () => {
+    expect(() => parseLoginInput({ email: 'user@example.com', password: 'a'.repeat(1025) })).toThrow('invalid_password_length');
+  });
+
   test('parseCreateUserInput validates role', () => {
     expect(() => parseCreateUserInput({ email: 'a@b.com', password: '123456789012', role: 'owner' })).toThrow('invalid_role');
   });
@@ -25,6 +33,16 @@ describe('auth route helpers', () => {
 
   test('parseCreateUserInput rejects missing fields', () => {
     expect(() => parseCreateUserInput({ email: 'a@b.com', role: 'user' })).toThrow('missing_fields');
+  });
+
+  test('parseCreateUserInput rejects invalid email', () => {
+    expect(() => parseCreateUserInput({ email: 'bad-email', password: '123456789012', role: 'user' })).toThrow('invalid_email');
+  });
+
+  test('parseCreateUserInput rejects excessive password length', () => {
+    expect(() =>
+      parseCreateUserInput({ email: 'a@b.com', password: 'a'.repeat(1025), role: 'user' })
+    ).toThrow('invalid_password_length');
   });
 
   test('requireAdmin allows admin', () => {
