@@ -27,12 +27,60 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy API worker and capture URL
-        id: resolve-url
+      - name: Resolve D1 binding and apply remote migration
+        id: d1-binding
         run: |
           npm install -g wrangler@4
 
-          deploy_cmd=(wrangler deploy --config=apps/api/wrangler.toml)
+          if [ "$WORKER_ENV" = "production" ]; then
+            DB_NAME="riannahs-plants-prod"
+          else
+            DB_NAME="riannahs-plants-dev"
+          fi
+
+          db_id=$(wrangler d1 list --json | jq -r --arg name "$DB_NAME" '.[] | select(.name == $name) | .uuid' | head -n 1)
+
+          if [ -z "$db_id" ]; then
+            echo "D1 database '$DB_NAME' not found. Creating it..."
+            db_id=$(wrangler d1 create "$DB_NAME" --json | jq -r '.uuid')
+          fi
+
+          if [ -z "$db_id" ] || [ "$db_id" = "null" ]; then
+            echo "Failed to resolve D1 database ID for '$DB_NAME'."
+            exit 1
+          fi
+
+          echo "Resolved $DB_NAME => $db_id"
+
+          DB_NAME="$DB_NAME" DB_ID="$db_id" WORKER_ENV="$WORKER_ENV" python - <<'PY'
+          import os
+          import pathlib
+          import re
+
+          source = pathlib.Path("apps/api/wrangler.toml").read_text()
+          worker_env = os.environ.get("WORKER_ENV", "")
+          db_name = os.environ["DB_NAME"]
+          db_id = os.environ["DB_ID"]
+
+          if worker_env == "production":
+              pattern = r'(\[\[env\.production\.d1_databases\]\]\s*binding\s*=\s*"DB"\s*database_name\s*=\s*"' + re.escape(db_name) + r'"\s*database_id\s*=\s*")[^"]+(")'
+          else:
+              pattern = r'(\[\[d1_databases\]\]\s*binding\s*=\s*"DB"\s*database_name\s*=\s*"' + re.escape(db_name) + r'"\s*database_id\s*=\s*")[^"]+(")'
+
+          replacement = r'\g<1>' + db_id + r'\2'
+          updated, count = re.subn(pattern, replacement, source, count=1, flags=re.S)
+          if count != 1:
+              raise SystemExit("Unable to update wrangler.toml D1 binding for deployment.")
+
+          pathlib.Path("/tmp/wrangler.ci.toml").write_text(updated)
+          PY
+
+          wrangler d1 execute "$DB_NAME" --remote --file=apps/api/migrations/0001_init.sql --config=/tmp/wrangler.ci.toml
+
+      - name: Deploy API worker and capture URL
+        id: resolve-url
+        run: |
+          deploy_cmd=(wrangler deploy --config=/tmp/wrangler.ci.toml)
           if [ -n "$WORKER_ENV" ]; then
             deploy_cmd+=(--env "$WORKER_ENV")
           fi
