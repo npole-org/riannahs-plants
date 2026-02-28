@@ -19,5 +19,6 @@ describe('session cookie', () => {
     expect(cookie).toContain('Priority=High');
     expect(cookie).toContain('__Host-rp_session=');
     expect(cookie).toContain('Max-Age=0');
+    expect(cookie).toContain('Expires=Thu, 01 Jan 1970 00:00:00 GMT');
   });
 });
