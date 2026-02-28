@@ -1,4 +1,4 @@
-# riannah's plants — Implementation Plan
+# riannah's garden — Implementation Plan
 
 ## Confirmed decisions
 
