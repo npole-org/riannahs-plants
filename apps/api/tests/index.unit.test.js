@@ -426,6 +426,20 @@ describe('worker index', () => {
     expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
   });
 
+  test('blocks cross-site state-changing requests with fetch metadata/origin checks', async () => {
+    const res = await worker.fetch(
+      new Request('http://local/auth/login', {
+        method: 'POST',
+        headers: { origin: 'https://evil.example.com' },
+        body: JSON.stringify({ email: 'admin@example.com', password: '123456789012' })
+      }),
+      { DB: {} }
+    );
+
+    expect(res.status).toBe(403);
+    await expect(res.json()).resolves.toEqual({ ok: false, error: 'forbidden' });
+  });
+
   test('adds baseline security headers on API responses', async () => {
     const res = await worker.fetch(new Request('http://local/health'), {});
 
@@ -435,6 +449,7 @@ describe('worker index', () => {
     expect(res.headers.get('Permissions-Policy')).toContain('geolocation=()');
     expect(res.headers.get('Permissions-Policy')).toContain('payment=()');
     expect(res.headers.get('Permissions-Policy')).toContain('fullscreen=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('gamepad=()');
     expect(res.headers.get('Permissions-Policy')).toContain('browsing-topics=()');
     expect(res.headers.get('Permissions-Policy')).toContain('clipboard-read=()');
     expect(res.headers.get('Permissions-Policy')).toContain('publickey-credentials-get=()');
