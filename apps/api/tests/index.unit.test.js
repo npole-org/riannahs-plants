@@ -429,6 +429,7 @@ describe('worker index', () => {
     expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
     expect(res.headers.get('Permissions-Policy')).toContain('geolocation=()');
     expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
+    expect(res.headers.get('X-Content-Security-Policy')).toContain("default-src 'none'");
     expect(res.headers.get('Strict-Transport-Security')).toBe('max-age=31536000; includeSubDomains');
     expect(res.headers.get('X-Permitted-Cross-Domain-Policies')).toBe('none');
     expect(res.headers.get('X-DNS-Prefetch-Control')).toBe('off');
