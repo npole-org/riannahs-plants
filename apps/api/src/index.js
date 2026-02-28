@@ -73,6 +73,7 @@ function buildSecurityHeaders() {
     'X-Permitted-Cross-Domain-Policies': 'none',
     'X-DNS-Prefetch-Control': 'off',
     'Cross-Origin-Opener-Policy': 'same-origin',
+    'Origin-Agent-Cluster': '?1',
     'Cache-Control': 'no-store, no-cache, must-revalidate',
     Pragma: 'no-cache',
     Expires: '0'

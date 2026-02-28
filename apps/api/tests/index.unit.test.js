@@ -432,6 +432,7 @@ describe('worker index', () => {
     expect(res.headers.get('X-Permitted-Cross-Domain-Policies')).toBe('none');
     expect(res.headers.get('X-DNS-Prefetch-Control')).toBe('off');
     expect(res.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
+    expect(res.headers.get('Origin-Agent-Cluster')).toBe('?1');
     expect(res.headers.get('Cache-Control')).toBe('no-store, no-cache, must-revalidate');
     expect(res.headers.get('Pragma')).toBe('no-cache');
     expect(res.headers.get('Expires')).toBe('0');
