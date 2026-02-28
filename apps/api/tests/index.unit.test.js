@@ -443,6 +443,7 @@ describe('worker index', () => {
     expect(res.headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
     expect(res.headers.get('Cross-Origin-Resource-Policy')).toBe('same-origin');
     expect(res.headers.get('Origin-Agent-Cluster')).toBe('?1');
+    expect(res.headers.get('X-WebKit-CSP')).toContain("default-src 'none'");
     expect(res.headers.get('X-Download-Options')).toBe('noopen');
     expect(res.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
     expect(res.headers.get('X-XSS-Protection')).toBe('0');
