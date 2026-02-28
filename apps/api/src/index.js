@@ -120,6 +120,14 @@ export default {
       return respond(logoutHandler());
     }
 
+
+    if (url.pathname === '/auth/me' && request.method === 'GET') {
+      if (!session) {
+        return respond(json(401, { ok: false, error: 'unauthorized' }));
+      }
+      return respond(json(200, { ok: true, user: { userId: session.userId, role: session.role, email: session.email } }));
+    }
+
     if (url.pathname === '/admin/users' && request.method === 'POST') {
       return respond(await createUserHandler(request, { usersRepo, session }));
     }
