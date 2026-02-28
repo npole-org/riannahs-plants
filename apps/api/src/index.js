@@ -71,7 +71,7 @@ function buildSecurityHeaders() {
     'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), accelerometer=(), autoplay=(), browsing-topics=(), clipboard-read=(), clipboard-write=(), display-capture=(), encrypted-media=(), fullscreen=(), gyroscope=(), hid=(), local-fonts=(), magnetometer=(), midi=(), payment=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), window-management=(), xr-spatial-tracking=(), idle-detection=()',
     'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     'X-Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
-    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
     'X-Permitted-Cross-Domain-Policies': 'none',
     'X-DNS-Prefetch-Control': 'off',
     'Cross-Origin-Opener-Policy': 'same-origin',
