@@ -41,8 +41,10 @@ function buildCorsHeaders(request, env) {
   const defaultOrigins = [
     'https://riannahs-plants-develop.pages.dev',
     'https://riannahs-plants.dev.npole.org',
+    'https://riannahs-garden.dev.npole.org',
     'https://riannahs-plants.pages.dev',
     'https://riannahs-plants.npole.org',
+    'https://riannahs-garden.npole.org',
     'http://localhost:5173'
   ];
   const allowedOrigins = configuredOrigins.length ? configuredOrigins : defaultOrigins;
