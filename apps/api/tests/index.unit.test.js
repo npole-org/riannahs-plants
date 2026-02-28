@@ -446,7 +446,7 @@ describe('worker index', () => {
     expect(res.headers.get('Content-Security-Policy')).toContain("form-action 'none'");
     expect(res.headers.get('X-Content-Security-Policy')).toContain("default-src 'none'");
     expect(res.headers.get('X-Content-Security-Policy')).toContain("form-action 'none'");
-    expect(res.headers.get('Strict-Transport-Security')).toBe('max-age=31536000; includeSubDomains');
+    expect(res.headers.get('Strict-Transport-Security')).toBe('max-age=63072000; includeSubDomains; preload');
     expect(res.headers.get('X-Permitted-Cross-Domain-Policies')).toBe('none');
     expect(res.headers.get('X-DNS-Prefetch-Control')).toBe('off');
     expect(res.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
@@ -470,7 +470,7 @@ describe('worker index', () => {
   test('adds HSTS header on API responses', async () => {
     const res = await worker.fetch(new Request('http://local/health'), {});
 
-    expect(res.headers.get('Strict-Transport-Security')).toBe('max-age=31536000; includeSubDomains');
+    expect(res.headers.get('Strict-Transport-Security')).toBe('max-age=63072000; includeSubDomains; preload');
   });
 
   test('returns both CORS and security headers when origin is allowed', async () => {
