@@ -80,6 +80,7 @@ function buildSecurityHeaders() {
     'X-Download-Options': 'noopen',
     'X-Robots-Tag': 'noindex, nofollow',
     'X-XSS-Protection': '0',
+    'Content-Language': 'en',
     'Cache-Control': 'no-store, no-cache, must-revalidate',
     'Surrogate-Control': 'no-store',
     Pragma: 'no-cache',
