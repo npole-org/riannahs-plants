@@ -448,6 +448,7 @@ describe('worker index', () => {
     expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
     expect(res.headers.get('Permissions-Policy')).toContain('geolocation=()');
     expect(res.headers.get('Permissions-Policy')).toContain('payment=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('picture-in-picture=()');
     expect(res.headers.get('Permissions-Policy')).toContain('fullscreen=()');
     expect(res.headers.get('Permissions-Policy')).toContain('gamepad=()');
     expect(res.headers.get('Permissions-Policy')).toContain('browsing-topics=()');
