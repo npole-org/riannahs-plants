@@ -1,4 +1,4 @@
-# riannahs-plants
+# riannahs-garden
 
 Closed-beta household plant management app by npole.
 

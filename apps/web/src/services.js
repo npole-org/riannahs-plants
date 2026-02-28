@@ -127,6 +127,18 @@ export function createAuthService(fetchImpl = fetch) {
       return payload;
     },
 
+    async me() {
+      const response = await fetchImpl(apiUrl('/auth/me'), {
+        method: 'GET',
+        credentials: 'include'
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || 'unauthorized');
+      }
+      return payload.user;
+    },
+
     async logout() {
       const response = await fetchImpl(apiUrl('/auth/logout'), {
         method: 'POST',

@@ -419,4 +419,26 @@ describe('worker index', () => {
 
     expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
   });
+
+  test('adds baseline security headers on API responses', async () => {
+    const res = await worker.fetch(new Request('http://local/health'), {});
+
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(res.headers.get('X-Frame-Options')).toBe('DENY');
+    expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
+    expect(res.headers.get('Permissions-Policy')).toContain('geolocation=()');
+    expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
+  });
+
+  test('returns both CORS and security headers when origin is allowed', async () => {
+    const res = await worker.fetch(
+      new Request('http://local/health', {
+        headers: { origin: 'https://riannahs-plants-develop.pages.dev' }
+      }),
+      {}
+    );
+
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://riannahs-plants-develop.pages.dev');
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+  });
 });

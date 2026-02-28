@@ -8,6 +8,7 @@ export function App({ summaryService, authService, plantService }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState(null);
+  const [sessionBootstrapped, setSessionBootstrapped] = useState(false);
   const [error, setError] = useState('');
   const [newPlantNickname, setNewPlantNickname] = useState('');
   const [editingId, setEditingId] = useState(null);
@@ -46,6 +47,28 @@ export function App({ summaryService, authService, plantService }) {
       active = false;
     };
   }, [role]);
+
+
+  useEffect(() => {
+    let active = true;
+
+    authService.me()
+      .then((user) => {
+        if (!active) return;
+        setRole(user.role);
+      })
+      .catch(() => {
+        if (!active) return;
+        setRole(null);
+      })
+      .finally(() => {
+        if (active) setSessionBootstrapped(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [authService]);
 
   async function onLogin(event) {
     event.preventDefault();
@@ -140,9 +163,11 @@ export function App({ summaryService, authService, plantService }) {
   }
 
   return (
-    <main style={{ fontFamily: 'system-ui', margin: '2rem auto', maxWidth: 720 }}>
-      <h1>riannah's plants</h1>
-      {!role ? (
+    <main className="app-shell">
+      <h1>riannah's garden</h1>
+      {!sessionBootstrapped ? (
+        <section aria-label="session-loading"><p>Restoring session…</p></section>
+      ) : !role ? (
         <section aria-label="login-form">
           <p>Sign in to continue.</p>
           <form onSubmit={onLogin}>

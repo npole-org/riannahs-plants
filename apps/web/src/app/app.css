@@ -1,0 +1,109 @@
+:root {
+  --bg: #f7f5ef;
+  --panel: #fffdf8;
+  --text: #2d2a22;
+  --muted: #6d6758;
+  --border: #d7cfbe;
+  --olive: #6b7f3a;
+  --olive-dark: #4f6229;
+  --tan: #cbb89a;
+  --earth: #8b5e3c;
+  --danger: #9b3d2f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, #f8f6f1 0%, #f3efe4 100%);
+}
+
+.app-shell {
+  margin: 1.5rem auto 3rem;
+  max-width: 860px;
+  padding: 0 1rem;
+}
+
+h1 {
+  margin: 0 0 1rem;
+  font-size: 2rem;
+  color: var(--olive-dark);
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  color: var(--earth);
+}
+
+section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03);
+}
+
+form {
+  display: grid;
+  gap: 0.7rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+input,
+select,
+button {
+  font: inherit;
+}
+
+input,
+select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+  background: #fff;
+  color: var(--text);
+}
+
+input:focus,
+select:focus {
+  outline: 2px solid color-mix(in srgb, var(--olive) 45%, white);
+  outline-offset: 1px;
+}
+
+button {
+  border: 1px solid var(--olive-dark);
+  background: var(--olive);
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background: var(--olive-dark);
+}
+
+ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+}
+
+li {
+  margin-bottom: 0.4rem;
+}
+
+p[role='alert'] {
+  color: var(--danger);
+  font-weight: 600;
+}
