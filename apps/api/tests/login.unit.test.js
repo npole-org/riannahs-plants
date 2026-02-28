@@ -18,7 +18,7 @@ describe('auth login/logout handlers', () => {
 
     const res = await loginHandler(request, { usersRepo });
     expect(res.status).toBe(200);
-    expect(res.headers.get('set-cookie')).toContain('rp_session=');
+    expect(res.headers.get('set-cookie')).toContain('__Host-rp_session=');
   });
 
   test('login returns 401 for invalid credentials', async () => {
