@@ -434,6 +434,8 @@ describe('worker index', () => {
     expect(res.headers.get('Permissions-Policy')).toContain('payment=()');
     expect(res.headers.get('Permissions-Policy')).toContain('fullscreen=()');
     expect(res.headers.get('Permissions-Policy')).toContain('browsing-topics=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('clipboard-read=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('publickey-credentials-get=()');
     expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
     expect(res.headers.get('Content-Security-Policy')).toContain("form-action 'none'");
     expect(res.headers.get('X-Content-Security-Policy')).toContain("default-src 'none'");
