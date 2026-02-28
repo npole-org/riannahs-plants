@@ -70,6 +70,7 @@ function buildSecurityHeaders() {
     'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
     'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'X-Permitted-Cross-Domain-Policies': 'none',
     'Cache-Control': 'no-store, no-cache, must-revalidate',
     Pragma: 'no-cache',
     Expires: '0'
