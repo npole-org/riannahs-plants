@@ -42,7 +42,8 @@ jobs:
 
           if [ -z "$db_id" ]; then
             echo "D1 database '$DB_NAME' not found. Creating it..."
-            db_id=$(wrangler d1 create "$DB_NAME" --json | jq -r '.uuid')
+            create_output=$(wrangler d1 create "$DB_NAME" 2>&1 | tee /tmp/wrangler-d1-create.log)
+            db_id=$(echo "$create_output" | grep -Eo '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -n 1)
           fi
 
           if [ -z "$db_id" ] || [ "$db_id" = "null" ]; then
