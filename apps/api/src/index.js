@@ -77,6 +77,7 @@ function buildSecurityHeaders() {
     'Cross-Origin-Embedder-Policy': 'require-corp',
     'Cross-Origin-Resource-Policy': 'same-origin',
     'Origin-Agent-Cluster': '?1',
+    'X-WebKit-CSP': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
     'X-Download-Options': 'noopen',
     'X-Robots-Tag': 'noindex, nofollow',
     'X-XSS-Protection': '0',
