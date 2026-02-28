@@ -440,6 +440,7 @@ describe('worker index', () => {
     expect(res.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
     expect(res.headers.get('X-XSS-Protection')).toBe('0');
     expect(res.headers.get('Cache-Control')).toBe('no-store, no-cache, must-revalidate');
+    expect(res.headers.get('Surrogate-Control')).toBe('no-store');
     expect(res.headers.get('Pragma')).toBe('no-cache');
     expect(res.headers.get('Expires')).toBe('0');
   });
