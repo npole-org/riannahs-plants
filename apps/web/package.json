@@ -11,7 +11,9 @@
     "test:unit": "vitest run src/domain src/services.unit.test.js --coverage",
     "test:integration": "vitest run src/app --coverage.enabled=false",
     "test": "npm run test:unit && npm run test:integration",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:dev": "bash ./scripts/e2e-dev-smoke.sh",
+    "test:e2e:dev:debug": "PLAYWRIGHT_DEBUG=1 bash ./scripts/e2e-dev-smoke.sh"
   },
   "dependencies": {
     "react": "^18.3.1",
