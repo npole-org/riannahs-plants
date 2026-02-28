@@ -141,7 +141,7 @@ export function App({ summaryService, authService, plantService }) {
 
   return (
     <main className="app-shell">
-      <h1>riannah's plants</h1>
+      <h1>riannah's garden</h1>
       {!role ? (
         <section aria-label="login-form">
           <p>Sign in to continue.</p>
