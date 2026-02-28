@@ -428,6 +428,8 @@ describe('worker index', () => {
     expect(res.headers.get('X-Frame-Options')).toBe('DENY');
     expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
     expect(res.headers.get('Permissions-Policy')).toContain('geolocation=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('payment=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('fullscreen=()');
     expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
     expect(res.headers.get('X-Content-Security-Policy')).toContain("default-src 'none'");
     expect(res.headers.get('Strict-Transport-Security')).toBe('max-age=31536000; includeSubDomains');

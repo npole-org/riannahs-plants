@@ -67,7 +67,7 @@ function buildSecurityHeaders() {
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
-    'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
+    'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), accelerometer=(), autoplay=(), display-capture=(), encrypted-media=(), fullscreen=(), gyroscope=(), magnetometer=(), midi=(), payment=(), usb=(), xr-spatial-tracking=()',
     'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
     'X-Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
