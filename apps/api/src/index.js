@@ -78,6 +78,7 @@ function buildSecurityHeaders() {
     'Origin-Agent-Cluster': '?1',
     'X-Download-Options': 'noopen',
     'X-Robots-Tag': 'noindex, nofollow',
+    'X-XSS-Protection': '0',
     'Cache-Control': 'no-store, no-cache, must-revalidate',
     Pragma: 'no-cache',
     Expires: '0'
