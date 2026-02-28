@@ -73,15 +73,15 @@ jobs:
           if count != 1:
               raise SystemExit("Unable to update wrangler.toml D1 binding for deployment.")
 
-          pathlib.Path("/tmp/wrangler.ci.toml").write_text(updated)
+          pathlib.Path("apps/api/wrangler.ci.toml").write_text(updated)
           PY
 
-          wrangler d1 execute "$DB_NAME" --remote --file=apps/api/migrations/0001_init.sql --config=/tmp/wrangler.ci.toml
+          wrangler d1 execute "$DB_NAME" --remote --file=apps/api/migrations/0001_init.sql --config=apps/api/wrangler.ci.toml
 
       - name: Deploy API worker and capture URL
         id: resolve-url
         run: |
-          deploy_cmd=(wrangler deploy --config=/tmp/wrangler.ci.toml)
+          deploy_cmd=(wrangler deploy --config=apps/api/wrangler.ci.toml)
           if [ -n "$WORKER_ENV" ]; then
             deploy_cmd+=(--env "$WORKER_ENV")
           fi
