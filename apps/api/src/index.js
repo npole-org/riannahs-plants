@@ -58,7 +58,7 @@ function buildCorsHeaders(request, env) {
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-    Vary: 'Origin'
+    Vary: 'Origin, Access-Control-Request-Method, Access-Control-Request-Headers'
   };
 }
 
