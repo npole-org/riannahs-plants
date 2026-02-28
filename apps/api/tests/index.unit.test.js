@@ -452,6 +452,7 @@ describe('worker index', () => {
     expect(res.headers.get('Permissions-Policy')).toContain('fullscreen=()');
     expect(res.headers.get('Permissions-Policy')).toContain('gamepad=()');
     expect(res.headers.get('Permissions-Policy')).toContain('attribution-reporting=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('bluetooth=()');
     expect(res.headers.get('Permissions-Policy')).toContain('browsing-topics=()');
     expect(res.headers.get('Permissions-Policy')).toContain('join-ad-interest-group=()');
     expect(res.headers.get('Permissions-Policy')).toContain('clipboard-read=()');
