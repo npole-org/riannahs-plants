@@ -383,4 +383,40 @@ describe('worker index', () => {
     expect(body.ok).toBe(true);
     expect(body.schedule.next_water_on).toBe('2026-03-03');
   });
+
+  test('adds CORS headers for allowed origins', async () => {
+    const res = await worker.fetch(
+      new Request('http://local/health', {
+        headers: { origin: 'https://riannahs-plants-develop.pages.dev' }
+      }),
+      {}
+    );
+
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://riannahs-plants-develop.pages.dev');
+    expect(res.headers.get('Access-Control-Allow-Credentials')).toBe('true');
+  });
+
+  test('preflight request returns 204 for configured origin', async () => {
+    const res = await worker.fetch(
+      new Request('http://local/auth/login', {
+        method: 'OPTIONS',
+        headers: { origin: 'https://app.example.com' }
+      }),
+      { CORS_ALLOWED_ORIGINS: 'https://app.example.com' }
+    );
+
+    expect(res.status).toBe(204);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://app.example.com');
+  });
+
+  test('does not add CORS header for disallowed origins', async () => {
+    const res = await worker.fetch(
+      new Request('http://local/health', {
+        headers: { origin: 'https://evil.example.com' }
+      }),
+      { CORS_ALLOWED_ORIGINS: 'https://safe.example.com' }
+    );
+
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
+  });
 });
