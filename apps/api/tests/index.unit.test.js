@@ -457,6 +457,7 @@ describe('worker index', () => {
     expect(res.headers.get('Permissions-Policy')).toContain('browsing-topics=()');
     expect(res.headers.get('Permissions-Policy')).toContain('join-ad-interest-group=()');
     expect(res.headers.get('Permissions-Policy')).toContain('clipboard-read=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('compute-pressure=()');
     expect(res.headers.get('Permissions-Policy')).toContain('publickey-credentials-get=()');
     expect(res.headers.get('Permissions-Policy')).toContain('run-ad-auction=()');
     expect(res.headers.get('Permissions-Policy')).toContain('window-management=()');
