@@ -434,6 +434,12 @@ describe('worker index', () => {
     expect(res.headers.get('Expires')).toBe('0');
   });
 
+  test('adds HSTS header on API responses', async () => {
+    const res = await worker.fetch(new Request('http://local/health'), {});
+
+    expect(res.headers.get('Strict-Transport-Security')).toBe('max-age=31536000; includeSubDomains');
+  });
+
   test('returns both CORS and security headers when origin is allowed', async () => {
     const res = await worker.fetch(
       new Request('http://local/health', {
