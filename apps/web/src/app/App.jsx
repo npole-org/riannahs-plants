@@ -140,7 +140,7 @@ export function App({ summaryService, authService, plantService }) {
   }
 
   return (
-    <main style={{ fontFamily: 'system-ui', margin: '2rem auto', maxWidth: 720 }}>
+    <main className="app-shell">
       <h1>riannah's plants</h1>
       {!role ? (
         <section aria-label="login-form">
