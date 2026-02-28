@@ -37,6 +37,24 @@ describe('auth login/logout handlers', () => {
     expect(res.status).toBe(401);
   });
 
+  test('login returns 400 for invalid email input', async () => {
+    const request = new Request('http://local/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'invalid-email', password: '123456789012' })
+    });
+
+    const usersRepo = {
+      async findByEmail() {
+        throw new Error('should_not_be_called');
+      }
+    };
+
+    const res = await loginHandler(request, { usersRepo });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe('invalid_email');
+  });
+
   test('logout clears session cookie', () => {
     const res = logoutHandler();
     expect(res.status).toBe(200);
