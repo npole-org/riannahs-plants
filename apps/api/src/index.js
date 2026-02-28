@@ -38,7 +38,13 @@ function buildCorsHeaders(request, env) {
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
-  const defaultOrigins = ['https://riannahs-plants-develop.pages.dev', 'http://localhost:5173'];
+  const defaultOrigins = [
+    'https://riannahs-plants-develop.pages.dev',
+    'https://riannahs-plants.dev.npole.org',
+    'https://riannahs-plants.pages.dev',
+    'https://riannahs-plants.npole.org',
+    'http://localhost:5173'
+  ];
   const allowedOrigins = configuredOrigins.length ? configuredOrigins : defaultOrigins;
 
   if (!allowedOrigins.includes(origin)) {
