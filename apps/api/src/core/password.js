@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-const DEFAULT_ITERATIONS = 210000;
+const DEFAULT_ITERATIONS = 100000;
 const KEYLEN = 32;
 const DIGEST = 'sha256';
 
