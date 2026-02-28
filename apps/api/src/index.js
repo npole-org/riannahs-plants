@@ -60,13 +60,26 @@ function buildCorsHeaders(request, env) {
   };
 }
 
-function withCors(response, corsHeaders) {
-  if (!corsHeaders) {
-    return response;
-  }
+function buildSecurityHeaders() {
+  return {
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'Referrer-Policy': 'no-referrer',
+    'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
+    'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'"
+  };
+}
 
+function withResponseHeaders(response, ...headerSets) {
   const headers = new Headers(response.headers);
-  Object.entries(corsHeaders).forEach(([key, value]) => headers.set(key, value));
+
+  for (const headerSet of headerSets) {
+    if (!headerSet) {
+      continue;
+    }
+
+    Object.entries(headerSet).forEach(([key, value]) => headers.set(key, value));
+  }
 
   return new Response(response.body, {
     status: response.status,
@@ -79,7 +92,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const corsHeaders = buildCorsHeaders(request, env);
-    const respond = (response) => withCors(response, corsHeaders);
+    const securityHeaders = buildSecurityHeaders();
+    const respond = (response) => withResponseHeaders(response, corsHeaders, securityHeaders);
 
     if (request.method === 'OPTIONS') {
       return respond(new Response(null, { status: 204 }));
@@ -104,6 +118,14 @@ export default {
 
     if (url.pathname === '/auth/logout' && request.method === 'POST') {
       return respond(logoutHandler());
+    }
+
+
+    if (url.pathname === '/auth/me' && request.method === 'GET') {
+      if (!session) {
+        return respond(json(401, { ok: false, error: 'unauthorized' }));
+      }
+      return respond(json(200, { ok: true, user: { userId: session.userId, role: session.role, email: session.email } }));
     }
 
     if (url.pathname === '/admin/users' && request.method === 'POST') {

@@ -28,6 +28,9 @@ describe('App', () => {
     };
 
     const authService = {
+      me: async () => {
+        throw new Error('unauthorized');
+      },
       login: async () => ({ ok: true, role: 'admin' }),
       logout: async () => ({ ok: true }),
       createUser: async ({ email, role }) => ({ id: 'u1', email, role })
@@ -35,6 +38,7 @@ describe('App', () => {
 
     render(<App summaryService={summaryService} authService={authService} plantService={plantService} />);
 
+    await screen.findByLabelText('Email');
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'admin@example.com' } });
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: '123456789012' } });
     fireEvent.click(screen.getByText('Sign in'));
