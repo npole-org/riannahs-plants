@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { createSessionCookie } from '../src/auth/session.js';
+import { clearSessionCookie, createSessionCookie } from '../src/auth/session.js';
 
 describe('session cookie', () => {
   test('includes secure cookie attributes', () => {
@@ -7,6 +7,17 @@ describe('session cookie', () => {
     expect(cookie).toContain('HttpOnly');
     expect(cookie).toContain('Secure');
     expect(cookie).toContain('SameSite=Lax');
+    expect(cookie).toContain('Priority=High');
     expect(cookie).toContain('__Host-rp_session=abc123');
+  });
+
+  test('clears cookie with matching hardened attributes', () => {
+    const cookie = clearSessionCookie();
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('Secure');
+    expect(cookie).toContain('SameSite=Lax');
+    expect(cookie).toContain('Priority=High');
+    expect(cookie).toContain('__Host-rp_session=');
+    expect(cookie).toContain('Max-Age=0');
   });
 });
