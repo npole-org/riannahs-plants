@@ -41,8 +41,10 @@ function buildCorsHeaders(request, env) {
   const defaultOrigins = [
     'https://riannahs-plants-develop.pages.dev',
     'https://riannahs-plants.dev.npole.org',
+    'https://riannahs-garden.dev.npole.org',
     'https://riannahs-plants.pages.dev',
     'https://riannahs-plants.npole.org',
+    'https://riannahs-garden.npole.org',
     'http://localhost:5173'
   ];
   const allowedOrigins = configuredOrigins.length ? configuredOrigins : defaultOrigins;
@@ -67,6 +69,7 @@ function buildSecurityHeaders() {
     'Referrer-Policy': 'no-referrer',
     'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
     'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
     'Cache-Control': 'no-store, no-cache, must-revalidate',
     Pragma: 'no-cache',
     Expires: '0'
