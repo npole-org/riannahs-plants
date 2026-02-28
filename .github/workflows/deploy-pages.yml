@@ -141,7 +141,7 @@ jobs:
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
   deployed-login-smoke:
-    needs: deploy
+    needs: [deploy, deploy-api]
     runs-on: ubuntu-latest
     if: github.ref_name == 'develop'
     defaults:
@@ -149,6 +149,7 @@ jobs:
         working-directory: apps/web
     env:
       PLAYWRIGHT_BASE_URL: https://riannahs-plants-develop.pages.dev
+      API_BASE_URL: ${{ needs.deploy-api.outputs.api_base_url }}
     steps:
       - uses: actions/checkout@v4
 
