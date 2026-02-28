@@ -1,4 +1,4 @@
-name: deploy-pages
+name: ci
 
 on:
   push:
