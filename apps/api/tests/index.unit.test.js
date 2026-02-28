@@ -91,10 +91,11 @@ describe('worker index', () => {
     expect(res.headers.get('set-cookie')).toContain('__Host-rp_session=');
   });
 
-  test('logout endpoint clears cookie', async () => {
+  test('logout endpoint clears cookie and site data', async () => {
     const res = await worker.fetch(new Request('http://local/auth/logout', { method: 'POST' }), {});
     expect(res.status).toBe(200);
     expect(res.headers.get('set-cookie')).toContain('Max-Age=0');
+    expect(res.headers.get('clear-site-data')).toBe('"cache", "cookies", "storage"');
   });
 
   test('admin create-user endpoint enforces admin session', async () => {

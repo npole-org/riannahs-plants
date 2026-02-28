@@ -29,5 +29,8 @@ export async function loginHandler(request, { usersRepo }) {
 }
 
 export function logoutHandler() {
-  return json(200, { ok: true }, { 'set-cookie': clearSessionCookie() });
+  return json(200, { ok: true }, {
+    'set-cookie': clearSessionCookie(),
+    'clear-site-data': '"cache", "cookies", "storage"'
+  });
 }
