@@ -69,6 +69,7 @@ function buildSecurityHeaders() {
     'Referrer-Policy': 'no-referrer',
     'Permissions-Policy': 'geolocation=(), camera=(), microphone=()',
     'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
+    'X-Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'",
     'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
     'X-Permitted-Cross-Domain-Policies': 'none',
     'X-DNS-Prefetch-Control': 'off',
