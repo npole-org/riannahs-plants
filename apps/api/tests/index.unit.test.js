@@ -395,6 +395,9 @@ describe('worker index', () => {
 
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://riannahs-plants-develop.pages.dev');
     expect(res.headers.get('Access-Control-Allow-Credentials')).toBe('true');
+    expect(res.headers.get('Vary')).toContain('Origin');
+    expect(res.headers.get('Vary')).toContain('Access-Control-Request-Method');
+    expect(res.headers.get('Vary')).toContain('Access-Control-Request-Headers');
   });
 
   test('preflight request returns 204 for configured origin', async () => {
