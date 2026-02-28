@@ -92,7 +92,7 @@ function buildSecurityHeaders() {
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
-    'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), accelerometer=(), autoplay=(), browsing-topics=(), clipboard-read=(), clipboard-write=(), display-capture=(), encrypted-media=(), fullscreen=(), gamepad=(), gyroscope=(), hid=(), local-fonts=(), magnetometer=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), window-management=(), xr-spatial-tracking=(), idle-detection=(), keyboard-map=(), speaker-selection=(), web-share=()',
+    'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), accelerometer=(), autoplay=(), browsing-topics=(), clipboard-read=(), clipboard-write=(), display-capture=(), encrypted-media=(), fullscreen=(), gamepad=(), gyroscope=(), hid=(), local-fonts=(), magnetometer=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), window-management=(), xr-spatial-tracking=(), idle-detection=(), keyboard-map=(), speaker-selection=(), web-share=()',
     'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     'X-Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
