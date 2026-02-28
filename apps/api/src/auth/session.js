@@ -1,4 +1,5 @@
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
+const SESSION_COOKIE_NAME = '__Host-rp_session';
 
 export function toBase64Url(value) {
   const base64 = btoa(value);
@@ -12,19 +13,19 @@ function fromBase64Url(value) {
 }
 
 export function createSessionCookie(value, { maxAge = SEVEN_DAYS } = {}) {
-  return `rp_session=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
+  return `${SESSION_COOKIE_NAME}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 }
 
 export function clearSessionCookie() {
-  return 'rp_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0';
+  return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
 }
 
 export function readSessionFromCookie(cookieHeader) {
   const value = String(cookieHeader || '')
     .split(';')
     .map((part) => part.trim())
-    .find((part) => part.startsWith('rp_session='))
-    ?.slice('rp_session='.length);
+    .find((part) => part.startsWith(`${SESSION_COOKIE_NAME}=`))
+    ?.slice(`${SESSION_COOKIE_NAME}=`.length);
 
   if (!value) {
     return null;

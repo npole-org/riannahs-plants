@@ -5,12 +5,12 @@ import { toBase64Url } from '../src/auth/session.js';
 
 function adminCookie() {
   const session = JSON.stringify({ userId: 'admin1', role: 'admin', email: 'admin@example.com' });
-  return `rp_session=${toBase64Url(session)}`;
+  return `__Host-rp_session=${toBase64Url(session)}`;
 }
 
 function userCookie() {
   const session = JSON.stringify({ userId: 'user1', role: 'user', email: 'user@example.com' });
-  return `rp_session=${toBase64Url(session)}`;
+  return `__Host-rp_session=${toBase64Url(session)}`;
 }
 
 describe('worker index', () => {
@@ -88,7 +88,7 @@ describe('worker index', () => {
     );
 
     expect(res.status).toBe(200);
-    expect(res.headers.get('set-cookie')).toContain('rp_session=');
+    expect(res.headers.get('set-cookie')).toContain('__Host-rp_session=');
   });
 
   test('logout endpoint clears cookie', async () => {
