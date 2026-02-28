@@ -432,6 +432,8 @@ describe('worker index', () => {
     expect(res.headers.get('X-Permitted-Cross-Domain-Policies')).toBe('none');
     expect(res.headers.get('X-DNS-Prefetch-Control')).toBe('off');
     expect(res.headers.get('Cross-Origin-Opener-Policy')).toBe('same-origin');
+    expect(res.headers.get('Cross-Origin-Embedder-Policy')).toBe('require-corp');
+    expect(res.headers.get('Cross-Origin-Resource-Policy')).toBe('same-origin');
     expect(res.headers.get('Origin-Agent-Cluster')).toBe('?1');
     expect(res.headers.get('X-Download-Options')).toBe('noopen');
     expect(res.headers.get('Cache-Control')).toBe('no-store, no-cache, must-revalidate');
