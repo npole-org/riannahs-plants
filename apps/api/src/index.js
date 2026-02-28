@@ -77,6 +77,7 @@ function buildSecurityHeaders() {
     'Cross-Origin-Resource-Policy': 'same-origin',
     'Origin-Agent-Cluster': '?1',
     'X-Download-Options': 'noopen',
+    'X-Robots-Tag': 'noindex, nofollow',
     'Cache-Control': 'no-store, no-cache, must-revalidate',
     Pragma: 'no-cache',
     Expires: '0'
