@@ -64,6 +64,7 @@ function buildCorsHeaders(request, env) {
 
 function buildSecurityHeaders() {
   return {
+    Vary: 'Cookie, Authorization',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
@@ -89,6 +90,24 @@ function buildSecurityHeaders() {
   };
 }
 
+function mergeHeaderList(existingValue, nextValue) {
+  const merged = new Set();
+
+  for (const value of [existingValue, nextValue]) {
+    if (!value) {
+      continue;
+    }
+
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .forEach((item) => merged.add(item));
+  }
+
+  return Array.from(merged).join(', ');
+}
+
 function withResponseHeaders(response, ...headerSets) {
   const headers = new Headers(response.headers);
 
@@ -97,7 +116,14 @@ function withResponseHeaders(response, ...headerSets) {
       continue;
     }
 
-    Object.entries(headerSet).forEach(([key, value]) => headers.set(key, value));
+    Object.entries(headerSet).forEach(([key, value]) => {
+      if (key.toLowerCase() === 'vary') {
+        headers.set('Vary', mergeHeaderList(headers.get('Vary'), value));
+        return;
+      }
+
+      headers.set(key, value);
+    });
   }
 
   return new Response(response.body, {
