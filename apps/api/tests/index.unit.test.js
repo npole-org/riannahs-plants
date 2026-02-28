@@ -430,6 +430,7 @@ describe('worker index', () => {
     expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
     expect(res.headers.get('Strict-Transport-Security')).toBe('max-age=31536000; includeSubDomains');
     expect(res.headers.get('X-Permitted-Cross-Domain-Policies')).toBe('none');
+    expect(res.headers.get('X-DNS-Prefetch-Control')).toBe('off');
     expect(res.headers.get('Cache-Control')).toBe('no-store, no-cache, must-revalidate');
     expect(res.headers.get('Pragma')).toBe('no-cache');
     expect(res.headers.get('Expires')).toBe('0');
