@@ -470,6 +470,7 @@ describe('worker index', () => {
     expect(res.headers.get('Permissions-Policy')).toContain('screen-wake-lock=()');
     expect(res.headers.get('Permissions-Policy')).toContain('web-share=()');
     expect(res.headers.get('Permissions-Policy')).toContain('language-model=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('otp-credentials=()');
     expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
     expect(res.headers.get('Content-Security-Policy')).toContain("form-action 'none'");
     expect(res.headers.get('X-Content-Security-Policy')).toContain("default-src 'none'");
