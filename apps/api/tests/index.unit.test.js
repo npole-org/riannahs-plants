@@ -398,6 +398,8 @@ describe('worker index', () => {
     expect(res.headers.get('Vary')).toContain('Origin');
     expect(res.headers.get('Vary')).toContain('Access-Control-Request-Method');
     expect(res.headers.get('Vary')).toContain('Access-Control-Request-Headers');
+    expect(res.headers.get('Vary')).toContain('Cookie');
+    expect(res.headers.get('Vary')).toContain('Authorization');
   });
 
   test('preflight request returns 204 for configured origin', async () => {
@@ -454,6 +456,8 @@ describe('worker index', () => {
     expect(res.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
     expect(res.headers.get('X-XSS-Protection')).toBe('0');
     expect(res.headers.get('Content-Language')).toBe('en');
+    expect(res.headers.get('Vary')).toContain('Cookie');
+    expect(res.headers.get('Vary')).toContain('Authorization');
     expect(res.headers.get('Cache-Control')).toBe('no-store, no-cache, must-revalidate');
     expect(res.headers.get('Surrogate-Control')).toBe('no-store');
     expect(res.headers.get('Pragma')).toBe('no-cache');
