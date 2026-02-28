@@ -441,6 +441,7 @@ describe('worker index', () => {
     expect(res.headers.get('Permissions-Policy')).toContain('window-management=()');
     expect(res.headers.get('Permissions-Policy')).toContain('local-fonts=()');
     expect(res.headers.get('Permissions-Policy')).toContain('idle-detection=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('speaker-selection=()');
     expect(res.headers.get('Permissions-Policy')).toContain('screen-wake-lock=()');
     expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
     expect(res.headers.get('Content-Security-Policy')).toContain("form-action 'none'");
