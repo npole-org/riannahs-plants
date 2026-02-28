@@ -435,7 +435,9 @@ describe('worker index', () => {
     expect(res.headers.get('Permissions-Policy')).toContain('fullscreen=()');
     expect(res.headers.get('Permissions-Policy')).toContain('browsing-topics=()');
     expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
+    expect(res.headers.get('Content-Security-Policy')).toContain("form-action 'none'");
     expect(res.headers.get('X-Content-Security-Policy')).toContain("default-src 'none'");
+    expect(res.headers.get('X-Content-Security-Policy')).toContain("form-action 'none'");
     expect(res.headers.get('Strict-Transport-Security')).toBe('max-age=31536000; includeSubDomains');
     expect(res.headers.get('X-Permitted-Cross-Domain-Policies')).toBe('none');
     expect(res.headers.get('X-DNS-Prefetch-Control')).toBe('off');
@@ -444,6 +446,7 @@ describe('worker index', () => {
     expect(res.headers.get('Cross-Origin-Resource-Policy')).toBe('same-origin');
     expect(res.headers.get('Origin-Agent-Cluster')).toBe('?1');
     expect(res.headers.get('X-WebKit-CSP')).toContain("default-src 'none'");
+    expect(res.headers.get('X-WebKit-CSP')).toContain("form-action 'none'");
     expect(res.headers.get('X-Download-Options')).toBe('noopen');
     expect(res.headers.get('X-Robots-Tag')).toBe('noindex, nofollow');
     expect(res.headers.get('X-XSS-Protection')).toBe('0');
