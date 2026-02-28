@@ -7,6 +7,6 @@ describe('session cookie', () => {
     expect(cookie).toContain('HttpOnly');
     expect(cookie).toContain('Secure');
     expect(cookie).toContain('SameSite=Lax');
-    expect(cookie).toContain('rp_session=abc123');
+    expect(cookie).toContain('__Host-rp_session=abc123');
   });
 });
