@@ -28,6 +28,30 @@ function notFound() {
   return json(404, { ok: false, error: 'not_found' });
 }
 
+function isCrossSiteStateChangingRequest(request) {
+  const method = request.method.toUpperCase();
+  const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+  if (!unsafeMethods.has(method)) {
+    return false;
+  }
+
+  const fetchSite = request.headers.get('sec-fetch-site');
+  if (fetchSite === 'cross-site') {
+    return true;
+  }
+
+  const origin = request.headers.get('origin');
+  if (!origin) {
+    return false;
+  }
+
+  try {
+    return origin !== new URL(request.url).origin;
+  } catch {
+    return false;
+  }
+}
+
 function buildCorsHeaders(request, env) {
   const origin = request.headers.get('origin');
   if (!origin) {
@@ -68,7 +92,7 @@ function buildSecurityHeaders() {
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
     'Referrer-Policy': 'no-referrer',
-    'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), accelerometer=(), autoplay=(), browsing-topics=(), clipboard-read=(), clipboard-write=(), display-capture=(), encrypted-media=(), fullscreen=(), gyroscope=(), hid=(), local-fonts=(), magnetometer=(), midi=(), payment=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), window-management=(), xr-spatial-tracking=(), idle-detection=(), speaker-selection=()',
+    'Permissions-Policy': 'geolocation=(), camera=(), microphone=(), accelerometer=(), autoplay=(), browsing-topics=(), clipboard-read=(), clipboard-write=(), display-capture=(), encrypted-media=(), fullscreen=(), gamepad=(), gyroscope=(), hid=(), local-fonts=(), magnetometer=(), midi=(), payment=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), usb=(), window-management=(), xr-spatial-tracking=(), idle-detection=(), speaker-selection=()',
     'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     'X-Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
@@ -150,6 +174,10 @@ export default {
 
     if (url.pathname === '/health/db') {
       return respond(json(200, await checkDatabase(env.DB)));
+    }
+
+    if (isCrossSiteStateChangingRequest(request)) {
+      return respond(json(403, { ok: false, error: 'forbidden' }));
     }
 
     const usersRepo = createUsersRepo(env.DB);
