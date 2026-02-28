@@ -17,7 +17,7 @@ export function createSessionCookie(value, { maxAge = SEVEN_DAYS } = {}) {
 }
 
 export function clearSessionCookie() {
-  return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Priority=High; Max-Age=0`;
+  return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Priority=High; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 export function readSessionFromCookie(cookieHeader) {
