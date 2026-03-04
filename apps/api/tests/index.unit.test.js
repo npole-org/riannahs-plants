@@ -476,6 +476,7 @@ describe('worker index', () => {
     expect(res.headers.get('Permissions-Policy')).toContain('identity-credentials-get=()');
     expect(res.headers.get('Permissions-Policy')).toContain('private-aggregation=()');
     expect(res.headers.get('Permissions-Policy')).toContain('direct-sockets=()');
+    expect(res.headers.get('Permissions-Policy')).toContain('interest-cohort=()');
     expect(res.headers.get('Permissions-Policy')).toContain('execution-while-not-rendered=()');
     expect(res.headers.get('Permissions-Policy')).toContain('execution-while-out-of-viewport=()');
     expect(res.headers.get('Content-Security-Policy')).toContain("default-src 'none'");
