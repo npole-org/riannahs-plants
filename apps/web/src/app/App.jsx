@@ -259,10 +259,12 @@ export function App({ summaryService, authService, plantService }) {
         </section>
       ) : (
         <>
-          <p>Signed in as {role}.</p>
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-            <button type="button" onClick={() => setActivePage('dashboard')}>Dashboard</button>
-            {role === 'admin' ? <button type="button" onClick={() => setActivePage('admin')}>Admin</button> : null}
+          <div className="topbar">
+            <p className="signed-in">Signed in as {role}.</p>
+            <div className="topbar-actions">
+              <button type="button" onClick={() => setActivePage('dashboard')}>Dashboard</button>
+              {role === 'admin' ? <button type="button" onClick={() => setActivePage('admin')}>Admin</button> : null}
+            </div>
           </div>
           {role === 'admin' && activePage === 'admin' ? (
             <section aria-label="admin-create-user">
@@ -294,11 +296,11 @@ export function App({ summaryService, authService, plantService }) {
               {createdUserEmail ? <p>Created user: {createdUserEmail}</p> : null}
             </section>
           ) : null}
-          {activePage === 'dashboard' ? (<>
-          <section aria-label="dashboard-summary">
-            <p>Total plants: {summary.plants}</p>
-            <p>Due today: {summary.dueToday}</p>
-            <p>Upcoming: {summary.upcoming}</p>
+          {activePage === 'dashboard' ? (<div className="dashboard-grid">
+          <section aria-label="dashboard-summary" className="summary-cards">
+            <p><strong>Total plants:</strong> {summary.plants}</p>
+            <p><strong>Due today:</strong> {summary.dueToday}</p>
+            <p><strong>Upcoming:</strong> {summary.upcoming}</p>
           </section>
           <section aria-label="dashboard-due-list">
             <h2>Due tasks</h2>
@@ -326,7 +328,7 @@ export function App({ summaryService, authService, plantService }) {
               </ul>
             )}
           </section>
-          <section aria-label="plant-management">
+          <section aria-label="plant-management" className="plant-management">
             <h2>Plants</h2>
             <form onSubmit={onAddPlant}>
               <label>
@@ -350,9 +352,9 @@ export function App({ summaryService, authService, plantService }) {
             {plants.length === 0 ? (
               <p>No plants yet.</p>
             ) : (
-              <ul>
+              <ul className="plant-list">
                 {sortedPlants.map((plant) => (
-                  <li key={plant.id}>
+                  <li key={plant.id} className="plant-row">
                     {editingId === plant.id ? (
                       <>
                         <input value={editingNickname} onChange={(event) => setEditingNickname(event.target.value)} />
@@ -371,24 +373,26 @@ export function App({ summaryService, authService, plantService }) {
                       </>
                     ) : (
                       <>
-                        <span>
+                        <span className="plant-title">
                           {plant.nickname} <small>({urgencyLabel(urgencyByPlant.get(plant.id))})</small>
                         </span>
-                        <button type="button" onClick={() => startEdit(plant)}>
-                          Edit
-                        </button>
-                        <button type="button" onClick={() => removePlant(plant.id)}>
-                          Delete
-                        </button>
-                        <button type="button" onClick={() => loadHistory(plant.id)}>
-                          History
-                        </button>
-                        <button type="button" onClick={() => quickLog(plant.id, 'water')}>
-                          Log water
-                        </button>
-                        <button type="button" onClick={() => quickLog(plant.id, 'repot')}>
-                          Log repot
-                        </button>
+                        <div className="plant-actions">
+                          <button type="button" onClick={() => startEdit(plant)}>
+                            Edit
+                          </button>
+                          <button type="button" onClick={() => removePlant(plant.id)}>
+                            Delete
+                          </button>
+                          <button type="button" onClick={() => loadHistory(plant.id)}>
+                            History
+                          </button>
+                          <button type="button" onClick={() => quickLog(plant.id, 'water')}>
+                            Log water
+                          </button>
+                          <button type="button" onClick={() => quickLog(plant.id, 'repot')}>
+                            Log repot
+                          </button>
+                        </div>
                       </>
                     )}
                   </li>
@@ -441,7 +445,7 @@ export function App({ summaryService, authService, plantService }) {
               </ul>
             )}
           </section>
-          </>) : null}
+          </div>) : null}
           {error ? <p role="alert">{error}</p> : null}
           <button onClick={onLogout} type="button">
             Sign out
