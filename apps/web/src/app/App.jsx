@@ -2,6 +2,38 @@ import React, { useEffect, useState } from 'react';
 
 const EMPTY_SUMMARY = { plants: 0, dueToday: 0, upcoming: 0, tasks: [] };
 
+function plantUrgency(tasks = []) {
+  const today = new Date().toISOString().slice(0, 10);
+  const byPlant = new Map();
+
+  for (const task of tasks) {
+    if (!task?.plant_id || !task?.due_on) continue;
+    const existing = byPlant.get(task.plant_id) || { overdue: 0, dueToday: 0, upcoming: 0 };
+    if (task.due_on < today) existing.overdue += 1;
+    else if (task.due_on === today) existing.dueToday += 1;
+    else existing.upcoming += 1;
+    byPlant.set(task.plant_id, existing);
+  }
+
+  return byPlant;
+}
+
+function urgencyLabel(bucket) {
+  if (!bucket) return 'none';
+  if (bucket.overdue > 0) return 'overdue';
+  if (bucket.dueToday > 0) return 'due today';
+  if (bucket.upcoming > 0) return 'upcoming';
+  return 'none';
+}
+
+function urgencyRank(bucket) {
+  if (!bucket) return 4;
+  if (bucket.overdue > 0) return 1;
+  if (bucket.dueToday > 0) return 2;
+  if (bucket.upcoming > 0) return 3;
+  return 4;
+}
+
 export function App({ summaryService, authService, plantService }) {
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
   const [plants, setPlants] = useState([]);
@@ -170,6 +202,13 @@ export function App({ summaryService, authService, plantService }) {
     }
   }
 
+  const urgencyByPlant = plantUrgency(summary.tasks);
+  const sortedPlants = [...plants].sort((a, b) => {
+    const rankDiff = urgencyRank(urgencyByPlant.get(a.id)) - urgencyRank(urgencyByPlant.get(b.id));
+    if (rankDiff !== 0) return rankDiff;
+    return a.nickname.localeCompare(b.nickname);
+  });
+
   return (
     <main className="app-shell">
       <h1>riannah's garden</h1>
@@ -263,7 +302,7 @@ export function App({ summaryService, authService, plantService }) {
               <p>No plants yet.</p>
             ) : (
               <ul>
-                {plants.map((plant) => (
+                {sortedPlants.map((plant) => (
                   <li key={plant.id}>
                     {editingId === plant.id ? (
                       <>
@@ -283,7 +322,9 @@ export function App({ summaryService, authService, plantService }) {
                       </>
                     ) : (
                       <>
-                        <span>{plant.nickname}</span>
+                        <span>
+                          {plant.nickname} <small>({urgencyLabel(urgencyByPlant.get(plant.id))})</small>
+                        </span>
                         <button type="button" onClick={() => startEdit(plant)}>
                           Edit
                         </button>
