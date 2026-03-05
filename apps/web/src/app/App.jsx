@@ -43,6 +43,9 @@ export function App({ summaryService, authService, plantService }) {
   const [sessionBootstrapped, setSessionBootstrapped] = useState(false);
   const [error, setError] = useState('');
   const [newPlantNickname, setNewPlantNickname] = useState('');
+  const [newPlantSpeciesCommon, setNewPlantSpeciesCommon] = useState('');
+  const [newPlantNotes, setNewPlantNotes] = useState('');
+  const [newPlantPicture, setNewPlantPicture] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editingNickname, setEditingNickname] = useState('');
   const [selectedPlantId, setSelectedPlantId] = useState('');
@@ -132,8 +135,15 @@ export function App({ summaryService, authService, plantService }) {
     event.preventDefault();
     if (!newPlantNickname.trim()) return;
 
-    await plantService.createPlant({ nickname: newPlantNickname.trim() });
+    await plantService.createPlant({
+      nickname: newPlantNickname.trim(),
+      species_common: newPlantSpeciesCommon.trim() || null,
+      notes: [newPlantNotes.trim(), newPlantPicture.trim() ? `picture: ${newPlantPicture.trim()}` : ''].filter(Boolean).join('\n') || null
+    });
     setNewPlantNickname('');
+    setNewPlantSpeciesCommon('');
+    setNewPlantNotes('');
+    setNewPlantPicture('');
     await loadDashboardData();
   }
 
@@ -208,6 +218,14 @@ export function App({ summaryService, authService, plantService }) {
     if (rankDiff !== 0) return rankDiff;
     return a.nickname.localeCompare(b.nickname);
   });
+
+  const selectedPlant = plants.find((p) => p.id === selectedPlantId) || null;
+  const selectedPlantTasks = summary.tasks.filter((t) => t.plant_id === selectedPlantId);
+  const nextWaterTask = selectedPlantTasks.filter((t) => t.type === 'water').sort((a, b) => a.due_on.localeCompare(b.due_on))[0] || null;
+  const nextRepotTask = selectedPlantTasks.filter((t) => t.type === 'repot').sort((a, b) => a.due_on.localeCompare(b.due_on))[0] || null;
+  const lastWaterEvent = eventHistory.find((e) => e.type === 'water') || null;
+  const lastRepotEvent = eventHistory.find((e) => e.type === 'repot') || null;
+  const repotThisWeek = summary.tasks.filter((t) => t.type === 'repot').slice(0, 7);
 
   return (
     <main className="app-shell">
@@ -289,12 +307,36 @@ export function App({ summaryService, authService, plantService }) {
               </ul>
             )}
           </section>
+          <section aria-label="repot-week-list">
+            <h2>Repot this week</h2>
+            {repotThisWeek.length === 0 ? (
+              <p>No repot tasks this week.</p>
+            ) : (
+              <ul>
+                {repotThisWeek.map((task) => (
+                  <li key={`week:${task.plant_id}:${task.due_on}`}>{task.nickname} · {task.due_on}</li>
+                ))}
+              </ul>
+            )}
+          </section>
           <section aria-label="plant-management">
             <h2>Plants</h2>
             <form onSubmit={onAddPlant}>
               <label>
                 New plant nickname
                 <input aria-label="New plant nickname" value={newPlantNickname} onChange={(event) => setNewPlantNickname(event.target.value)} />
+              </label>
+              <label>
+                Species/common name
+                <input aria-label="Species/common name" value={newPlantSpeciesCommon} onChange={(event) => setNewPlantSpeciesCommon(event.target.value)} />
+              </label>
+              <label>
+                Picture URL
+                <input aria-label="Picture URL" value={newPlantPicture} onChange={(event) => setNewPlantPicture(event.target.value)} />
+              </label>
+              <label>
+                Notes
+                <input aria-label="Plant notes" value={newPlantNotes} onChange={(event) => setNewPlantNotes(event.target.value)} />
               </label>
               <button type="submit">Add plant</button>
             </form>
@@ -361,6 +403,22 @@ export function App({ summaryService, authService, plantService }) {
               </label>
               <button type="submit">Save schedule</button>
             </form>
+          </section>
+          <section aria-label="plant-detail-view">
+            <h2>Selected plant detail</h2>
+            {!selectedPlant ? (
+              <p>Select a plant via History to view details.</p>
+            ) : (
+              <ul>
+                <li>{selectedPlant.nickname}</li>
+                <li>Species: {selectedPlant.species_common || 'n/a'}</li>
+                <li>Notes: {selectedPlant.notes || 'n/a'}</li>
+                <li>Last watered: {lastWaterEvent?.occurred_on || 'n/a'}</li>
+                <li>Next water due: {nextWaterTask?.due_on || 'n/a'}</li>
+                <li>Last repotted: {lastRepotEvent?.occurred_on || 'n/a'}</li>
+                <li>Next repot due: {nextRepotTask?.due_on || 'n/a'}</li>
+              </ul>
+            )}
           </section>
           <section aria-label="event-history">
             <h2>Event history</h2>
