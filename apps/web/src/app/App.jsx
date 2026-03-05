@@ -56,6 +56,7 @@ export function App({ summaryService, authService, plantService }) {
   const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState('user');
   const [createdUserEmail, setCreatedUserEmail] = useState('');
+  const [activePage, setActivePage] = useState('dashboard');
 
   async function loadDashboardData() {
     const [nextSummary, nextPlants] = await Promise.all([summaryService.getSummary(), plantService.listPlants()]);
@@ -129,6 +130,7 @@ export function App({ summaryService, authService, plantService }) {
     setNewUserEmail('');
     setNewUserPassword('');
     setNewUserRole('user');
+    setActivePage('dashboard');
   }
 
   async function onAddPlant(event) {
@@ -258,7 +260,11 @@ export function App({ summaryService, authService, plantService }) {
       ) : (
         <>
           <p>Signed in as {role}.</p>
-          {role === 'admin' ? (
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+            <button type="button" onClick={() => setActivePage('dashboard')}>Dashboard</button>
+            {role === 'admin' ? <button type="button" onClick={() => setActivePage('admin')}>Admin</button> : null}
+          </div>
+          {role === 'admin' && activePage === 'admin' ? (
             <section aria-label="admin-create-user">
               <h2>Create user</h2>
               <form onSubmit={onCreateUser}>
@@ -288,6 +294,7 @@ export function App({ summaryService, authService, plantService }) {
               {createdUserEmail ? <p>Created user: {createdUserEmail}</p> : null}
             </section>
           ) : null}
+          {activePage === 'dashboard' ? (<>
           <section aria-label="dashboard-summary">
             <p>Total plants: {summary.plants}</p>
             <p>Due today: {summary.dueToday}</p>
@@ -434,6 +441,7 @@ export function App({ summaryService, authService, plantService }) {
               </ul>
             )}
           </section>
+          </>) : null}
           {error ? <p role="alert">{error}</p> : null}
           <button onClick={onLogout} type="button">
             Sign out
