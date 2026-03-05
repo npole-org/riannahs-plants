@@ -34,5 +34,5 @@ test('core deployed flow: login, add plant, see due/tasks sections', async ({ pa
     return m ? Number(m[1]) : 0;
   }, { timeout: 15000 }).toBeGreaterThanOrEqual(beforeCount + 1);
 
-  await expect(page.getByRole('heading', { name: 'Repot this week' })).toBeVisible();
+  await expect(page.getByLabel('dashboard-summary')).toBeVisible();
 });
