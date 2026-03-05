@@ -36,11 +36,16 @@ function isCrossSiteStateChangingRequest(request, env) {
   }
 
   const fetchSite = request.headers.get('sec-fetch-site');
+  const origin = request.headers.get('origin');
+
   if (fetchSite === 'cross-site') {
+    // Allow known first-party app origins even though API host differs.
+    if (origin && allowedOriginsFor(env).includes(origin)) {
+      return false;
+    }
     return true;
   }
 
-  const origin = request.headers.get('origin');
   if (!origin) {
     return false;
   }
