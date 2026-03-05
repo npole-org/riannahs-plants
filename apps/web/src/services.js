@@ -105,6 +105,18 @@ export function createPlantService(fetchImpl = fetch) {
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || 'event_history_failed');
       return payload.events || [];
+    },
+
+    async recordEvent(id, type, occurred_on = new Date().toISOString().slice(0, 10)) {
+      const response = await fetchImpl(apiUrl(`/plants/${id}/events`), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ type, occurred_on })
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'event_record_failed');
+      return payload.event;
     }
   };
 }
