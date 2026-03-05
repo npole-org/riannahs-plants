@@ -2,8 +2,17 @@ name: deploy-pages
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'Deploy target'
+        type: choice
+        required: true
+        default: prod
+        options:
+          - dev
+          - prod
 
 permissions:
   contents: read
@@ -14,13 +23,33 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       api_base_url: ${{ steps.resolve-url.outputs.api_base_url }}
+      deploy_target: ${{ steps.meta.outputs.deploy_target }}
     env:
-      WORKER_ENV: ${{ github.ref_name == 'main' && 'production' || '' }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - id: meta
+        name: Resolve deploy metadata
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            target="${{ inputs.target }}"
+          else
+            target="dev"
+          fi
+
+          if [ "$target" = "prod" ]; then
+            worker_env="production"
+            db_name="riannahs-plants-prod"
+          else
+            worker_env=""
+            db_name="riannahs-plants-dev"
+          fi
+
+          echo "deploy_target=$target" >> "$GITHUB_OUTPUT"
+          echo "worker_env=$worker_env" >> "$GITHUB_OUTPUT"
+          echo "db_name=$db_name" >> "$GITHUB_OUTPUT"
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -28,142 +57,102 @@ jobs:
           node-version: '20'
 
       - name: Resolve D1 binding and apply remote migration
-        id: d1-binding
         run: |
           npm install -g wrangler@4
-
-          if [ "$WORKER_ENV" = "production" ]; then
-            DB_NAME="riannahs-plants-prod"
-          else
-            DB_NAME="riannahs-plants-dev"
-          fi
+          DB_NAME="${{ steps.meta.outputs.db_name }}"
+          WORKER_ENV="${{ steps.meta.outputs.worker_env }}"
 
           db_id=$(wrangler d1 list --json | jq -r --arg name "$DB_NAME" '.[] | select(.name == $name) | .uuid' | head -n 1)
 
           if [ -z "$db_id" ]; then
-            echo "D1 database '$DB_NAME' not found. Creating it..."
             create_output=$(wrangler d1 create "$DB_NAME" 2>&1 | tee /tmp/wrangler-d1-create.log)
-            db_id=$(echo "$create_output" | grep -Eo '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | head -n 1)
+            db_id=$(echo "$create_output" | grep -Eo '[0-9a-f-]{36}' | head -n 1)
           fi
 
-          if [ -z "$db_id" ] || [ "$db_id" = "null" ]; then
-            echo "Failed to resolve D1 database ID for '$DB_NAME'."
-            exit 1
-          fi
-
-          echo "Resolved $DB_NAME => $db_id"
+          [ -n "$db_id" ]
 
           DB_NAME="$DB_NAME" DB_ID="$db_id" WORKER_ENV="$WORKER_ENV" python - <<'PY'
-          import os
-          import pathlib
-          import re
+          import os, pathlib, re
+          source = pathlib.Path('apps/api/wrangler.toml').read_text()
+          worker_env = os.environ.get('WORKER_ENV', '')
+          db_name = os.environ['DB_NAME']
+          db_id = os.environ['DB_ID']
 
-          source = pathlib.Path("apps/api/wrangler.toml").read_text()
-          worker_env = os.environ.get("WORKER_ENV", "")
-          db_name = os.environ["DB_NAME"]
-          db_id = os.environ["DB_ID"]
-
-          if worker_env == "production":
+          if worker_env == 'production':
               pattern = r'(\[\[env\.production\.d1_databases\]\]\s*binding\s*=\s*"DB"\s*database_name\s*=\s*"' + re.escape(db_name) + r'"\s*database_id\s*=\s*")[^"]+(")'
           else:
               pattern = r'(\[\[d1_databases\]\]\s*binding\s*=\s*"DB"\s*database_name\s*=\s*"' + re.escape(db_name) + r'"\s*database_id\s*=\s*")[^"]+(")'
 
-          replacement = r'\g<1>' + db_id + r'\2'
-          updated, count = re.subn(pattern, replacement, source, count=1, flags=re.S)
+          updated, count = re.subn(pattern, r'\g<1>' + db_id + r'\2', source, count=1, flags=re.S)
           if count != 1:
-              raise SystemExit("Unable to update wrangler.toml D1 binding for deployment.")
-
-          pathlib.Path("apps/api/wrangler.ci.toml").write_text(updated)
+              raise SystemExit('Unable to update wrangler.toml D1 binding')
+          pathlib.Path('apps/api/wrangler.ci.toml').write_text(updated)
           PY
 
           wrangler d1 execute "$DB_NAME" --remote --file=apps/api/migrations/0001_init.sql --config=apps/api/wrangler.ci.toml
 
-      - name: Deploy API worker and capture URL
-        id: resolve-url
+      - id: resolve-url
+        name: Deploy API worker and capture URL
         run: |
+          WORKER_ENV="${{ steps.meta.outputs.worker_env }}"
           deploy_cmd=(wrangler deploy --config=apps/api/wrangler.ci.toml)
           if [ -n "$WORKER_ENV" ]; then
             deploy_cmd+=(--env "$WORKER_ENV")
           fi
-
           deploy_output="$(${deploy_cmd[@]} 2>&1 | tee /tmp/wrangler-deploy.log)"
           api_base_url=$(echo "$deploy_output" | grep -Eo 'https://[a-zA-Z0-9._-]+\.workers\.dev' | head -n 1)
-
-          if [ -z "$api_base_url" ]; then
-            echo "Failed to detect workers.dev URL from wrangler deploy output"
-            echo "--- wrangler output ---"
-            cat /tmp/wrangler-deploy.log
-            exit 1
-          fi
-
+          [ -n "$api_base_url" ]
           echo "api_base_url=$api_base_url" >> "$GITHUB_OUTPUT"
-          echo "Using API base URL host: $api_base_url"
 
-  deploy:
+  deploy-web:
     needs: deploy-api
     runs-on: ubuntu-latest
     env:
-      TARGET_PROJECT: ${{ github.ref_name == 'main' && 'riannahs-plants' || 'riannahs-plants-develop' }}
+      DEPLOY_TARGET: ${{ needs.deploy-api.outputs.deploy_target }}
+      TARGET_PROJECT: ${{ needs.deploy-api.outputs.deploy_target == 'prod' && 'riannahs-plants' || 'riannahs-plants-develop' }}
       VITE_API_BASE_URL: ${{ needs.deploy-api.outputs.api_base_url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
-
       - name: Install web dependencies
         working-directory: apps/web
         run: npm ci
-
-      - name: Validate API base URL wiring
-        run: |
-          if [ -z "$VITE_API_BASE_URL" ]; then
-            echo "VITE_API_BASE_URL could not be derived for branch ${{ github.ref_name }}."
-            exit 1
-          fi
-          echo "Using API base URL host: $(echo "$VITE_API_BASE_URL" | sed -E 's#(https?://[^/]+).*#\1#')"
-
       - name: Build web app
         working-directory: apps/web
         run: npm run build
-
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/web/dist --project-name=${{ env.TARGET_PROJECT }} --branch=${{ github.ref_name }} --commit-dirty=true
+          command: pages deploy apps/web/dist --project-name=${{ env.TARGET_PROJECT }} --branch=main --commit-dirty=true
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
   deployed-login-smoke:
-    needs: deploy
+    needs: deploy-web
     runs-on: ubuntu-latest
-    if: github.ref_name == 'develop'
+    if: needs.deploy-api.outputs.deploy_target == 'dev'
     defaults:
       run:
         working-directory: apps/web
     env:
-      PLAYWRIGHT_BASE_URL: https://riannahs-plants-develop.pages.dev
+      PLAYWRIGHT_BASE_URL: https://riannahs-garden.dev.npole.org
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
           cache-dependency-path: apps/web/package-lock.json
-
       - name: Install web dependencies
         run: npm ci
-
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
-
       - name: Run deployed login smoke test
         run: npx playwright test tests/e2e/login-deployed.spec.js --reporter=line

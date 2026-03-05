@@ -2,7 +2,7 @@ name: ci
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -27,7 +27,6 @@ jobs:
         run: npm run test:unit
       - name: Integration tests
         run: npm run test:integration
-
 
   api-unit-tests:
     runs-on: ubuntu-latest
