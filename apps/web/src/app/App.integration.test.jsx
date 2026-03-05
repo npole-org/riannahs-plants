@@ -68,6 +68,6 @@ describe('App', () => {
     fireEvent.click(screen.getByText('Save schedule'));
 
     fireEvent.click(screen.getAllByText('Delete')[0]);
-    expect(await screen.findByText('Total plants: 1')).toBeInTheDocument();
+    expect((await screen.findByLabelText('dashboard-summary')).textContent).toContain('Total plants: 1');
   });
 });
