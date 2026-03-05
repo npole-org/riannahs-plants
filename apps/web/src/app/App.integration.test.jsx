@@ -59,7 +59,7 @@ describe('App', () => {
     fireEvent.click(screen.getAllByText('Edit')[0]);
     fireEvent.change(screen.getByDisplayValue('Monstera'), { target: { value: 'Monstera Prime' } });
     fireEvent.click(screen.getByText('Save'));
-    expect(await screen.findByText('Monstera Prime')).toBeInTheDocument();
+    expect((await screen.findByLabelText('plant-detail-view')).textContent).toContain('Monstera Prime');
 
     fireEvent.click(screen.getAllByText('History')[0]);
     expect(await screen.findByText('water · 2026-02-27')).toBeInTheDocument();

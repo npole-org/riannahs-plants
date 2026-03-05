@@ -34,6 +34,18 @@ function urgencyRank(bucket) {
   return 4;
 }
 
+
+function plusDays(days) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function extractPicture(notes = '') {
+  const line = String(notes).split('\n').find((l) => l.toLowerCase().startsWith('picture:'));
+  return line ? line.slice(8).trim() : '';
+}
+
 export function App({ summaryService, authService, plantService }) {
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
   const [plants, setPlants] = useState([]);
@@ -46,6 +58,12 @@ export function App({ summaryService, authService, plantService }) {
   const [newPlantSpeciesCommon, setNewPlantSpeciesCommon] = useState('');
   const [newPlantNotes, setNewPlantNotes] = useState('');
   const [newPlantPicture, setNewPlantPicture] = useState('');
+  const [lastWateredByPlant, setLastWateredByPlant] = useState({});
+  const [saveMessage, setSaveMessage] = useState('');
+  const [detailEditing, setDetailEditing] = useState(false);
+  const [detailNickname, setDetailNickname] = useState('');
+  const [detailSpecies, setDetailSpecies] = useState('');
+  const [detailNotes, setDetailNotes] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editingNickname, setEditingNickname] = useState('');
   const [selectedPlantId, setSelectedPlantId] = useState('');
@@ -62,6 +80,16 @@ export function App({ summaryService, authService, plantService }) {
     const [nextSummary, nextPlants] = await Promise.all([summaryService.getSummary(), plantService.listPlants()]);
     setSummary(nextSummary);
     setPlants(nextPlants);
+    const histories = await Promise.all(nextPlants.map(async (plant) => ({
+      id: plant.id,
+      events: await plantService.listEvents(plant.id).catch(() => [])
+    })));
+    const last = {};
+    for (const item of histories) {
+      const water = item.events.find((e) => e.type === 'water');
+      last[item.id] = water?.occurred_on || '';
+    }
+    setLastWateredByPlant(last);
   }
 
   useEffect(() => {
@@ -147,6 +175,40 @@ export function App({ summaryService, authService, plantService }) {
     setNewPlantNotes('');
     setNewPlantPicture('');
     await loadDashboardData();
+  }
+
+  async function onPictureUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setNewPlantPicture(String(reader.result || ''));
+    reader.readAsDataURL(file);
+  }
+
+  function selectPlant(plantId) {
+    setSelectedPlantId(plantId);
+    loadHistory(plantId);
+    const p = plants.find((x) => x.id === plantId);
+    if (p) {
+      setDetailNickname(p.nickname || '');
+      setDetailSpecies(p.species_common || '');
+      setDetailNotes(p.notes || '');
+      setDetailEditing(false);
+    }
+  }
+
+  async function saveDetailPlant() {
+    if (!selectedPlantId) return;
+    await plantService.updatePlant(selectedPlantId, {
+      nickname: detailNickname.trim(),
+      species_common: detailSpecies.trim() || null,
+      notes: detailNotes.trim() || null
+    });
+    await loadDashboardData();
+    await loadHistory(selectedPlantId);
+    setDetailEditing(false);
+    setSaveMessage('Saved');
+    setTimeout(() => setSaveMessage(''), 1800);
   }
 
   function startEdit(plant) {
@@ -303,7 +365,7 @@ export function App({ summaryService, authService, plantService }) {
             <p><strong>Upcoming:</strong> {summary.upcoming}</p>
           </section>
           <section aria-label="dashboard-due-list">
-            <h2>Due tasks</h2>
+            <h2>Water today</h2>
             {summary.tasks.length === 0 ? (
               <p>No tasks due.</p>
             ) : (
@@ -344,6 +406,14 @@ export function App({ summaryService, authService, plantService }) {
                 <input aria-label="Picture URL" value={newPlantPicture} onChange={(event) => setNewPlantPicture(event.target.value)} />
               </label>
               <label>
+                Upload picture
+                <input aria-label="Upload picture" type="file" accept="image/*" onChange={onPictureUpload} />
+              </label>
+              <label>
+                Take picture
+                <input aria-label="Take picture" type="file" accept="image/*" capture="environment" onChange={onPictureUpload} />
+              </label>
+              <label>
                 Notes
                 <input aria-label="Plant notes" value={newPlantNotes} onChange={(event) => setNewPlantNotes(event.target.value)} />
               </label>
@@ -354,7 +424,7 @@ export function App({ summaryService, authService, plantService }) {
             ) : (
               <ul className="plant-list">
                 {sortedPlants.map((plant) => (
-                  <li key={plant.id} className="plant-row">
+                  <li key={plant.id} className="plant-row" onClick={() => selectPlant(plant.id)}>
                     {editingId === plant.id ? (
                       <>
                         <input value={editingNickname} onChange={(event) => setEditingNickname(event.target.value)} />
@@ -374,9 +444,11 @@ export function App({ summaryService, authService, plantService }) {
                     ) : (
                       <>
                         <span className="plant-title">
+                          {extractPicture(plant.notes) ? <img alt={`${plant.nickname} photo`} src={extractPicture(plant.notes)} style={{ width: 44, height: 44, objectFit: 'cover', borderRadius: 8, marginRight: 8, verticalAlign: 'middle' }} /> : null}
                           {plant.nickname} <small>({urgencyLabel(urgencyByPlant.get(plant.id))})</small>
                         </span>
-                        <div className="plant-actions">
+                        <small>Last watered: {lastWateredByPlant[plant.id] || 'n/a'}</small>
+                        <div className="plant-actions" onClick={(e) => e.stopPropagation()}>
                           <button type="button" onClick={() => startEdit(plant)}>
                             Edit
                           </button>
@@ -418,17 +490,33 @@ export function App({ summaryService, authService, plantService }) {
           <section aria-label="plant-detail-view">
             <h2>Selected plant detail</h2>
             {!selectedPlant ? (
-              <p>Select a plant via History to view details.</p>
+              <p>Select a plant to view details.</p>
             ) : (
-              <ul>
-                <li>{selectedPlant.nickname}</li>
-                <li>Species: {selectedPlant.species_common || 'n/a'}</li>
-                <li>Notes: {selectedPlant.notes || 'n/a'}</li>
-                <li>Last watered: {lastWaterEvent?.occurred_on || 'n/a'}</li>
-                <li>Next water due: {nextWaterTask?.due_on || 'n/a'}</li>
-                <li>Last repotted: {lastRepotEvent?.occurred_on || 'n/a'}</li>
-                <li>Next repot due: {nextRepotTask?.due_on || 'n/a'}</li>
-              </ul>
+              <div>
+                {extractPicture(selectedPlant.notes) ? <img alt={`${selectedPlant.nickname} detail`} src={extractPicture(selectedPlant.notes)} style={{ width: '100%', maxWidth: 240, borderRadius: 10 }} /> : null}
+                {detailEditing ? (
+                  <>
+                    <label>Nickname<input value={detailNickname} onChange={(e) => setDetailNickname(e.target.value)} /></label>
+                    <label>Species<input value={detailSpecies} onChange={(e) => setDetailSpecies(e.target.value)} /></label>
+                    <label>Notes<input value={detailNotes} onChange={(e) => setDetailNotes(e.target.value)} /></label>
+                    <button type="button" onClick={saveDetailPlant}>Save</button>
+                  </>
+                ) : (
+                  <>
+                    <ul>
+                      <li>{selectedPlant.nickname}</li>
+                      <li>Species: {selectedPlant.species_common || 'n/a'}</li>
+                      <li>Notes: {selectedPlant.notes || 'n/a'}</li>
+                      <li>Last watered: {lastWaterEvent?.occurred_on || 'n/a'}</li>
+                      <li>Next water due: {nextWaterTask?.due_on || 'n/a'}</li>
+                      <li>Last repotted: {lastRepotEvent?.occurred_on || 'n/a'}</li>
+                      <li>Next repot due: {nextRepotTask?.due_on || 'n/a'}</li>
+                    </ul>
+                    <button type="button" onClick={() => setDetailEditing(true)}>Edit</button>
+                  </>
+                )}
+                {saveMessage ? <p>{saveMessage}</p> : null}
+              </div>
             )}
           </section>
           <section aria-label="event-history">
