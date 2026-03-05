@@ -13,11 +13,11 @@ function fromBase64Url(value) {
 }
 
 export function createSessionCookie(value, { maxAge = SEVEN_DAYS } = {}) {
-  return `${SESSION_COOKIE_NAME}=${value}; Path=/; HttpOnly; Secure; SameSite=Strict; Priority=High; Max-Age=${maxAge}`;
+  return `${SESSION_COOKIE_NAME}=${value}; Path=/; HttpOnly; Secure; SameSite=None; Priority=High; Max-Age=${maxAge}`;
 }
 
 export function clearSessionCookie() {
-  return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Strict; Priority=High; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  return `${SESSION_COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=None; Priority=High; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 }
 
 export function readSessionFromCookie(cookieHeader) {

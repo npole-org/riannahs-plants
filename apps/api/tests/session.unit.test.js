@@ -6,7 +6,7 @@ describe('session cookie', () => {
     const cookie = createSessionCookie('abc123');
     expect(cookie).toContain('HttpOnly');
     expect(cookie).toContain('Secure');
-    expect(cookie).toContain('SameSite=Strict');
+    expect(cookie).toContain('SameSite=None');
     expect(cookie).toContain('Priority=High');
     expect(cookie).toContain('__Host-rp_session=abc123');
   });
@@ -15,7 +15,7 @@ describe('session cookie', () => {
     const cookie = clearSessionCookie();
     expect(cookie).toContain('HttpOnly');
     expect(cookie).toContain('Secure');
-    expect(cookie).toContain('SameSite=Strict');
+    expect(cookie).toContain('SameSite=None');
     expect(cookie).toContain('Priority=High');
     expect(cookie).toContain('__Host-rp_session=');
     expect(cookie).toContain('Max-Age=0');

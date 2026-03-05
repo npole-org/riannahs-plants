@@ -45,11 +45,13 @@ describe('App', () => {
 
     expect(await screen.findByText('Monstera')).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Admin' }));
     fireEvent.change(screen.getByLabelText('User email'), { target: { value: 'new-user@example.com' } });
     fireEvent.change(screen.getByLabelText('Temporary password'), { target: { value: 'temporarypass' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create user' }));
     expect(await screen.findByText('Created user: new-user@example.com')).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
     fireEvent.change(screen.getByLabelText('New plant nickname'), { target: { value: 'Pothos' } });
     fireEvent.click(screen.getByText('Add plant'));
     expect(await screen.findByText('Pothos')).toBeInTheDocument();
