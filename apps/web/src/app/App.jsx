@@ -132,6 +132,14 @@ export function App({ summaryService, authService, plantService }) {
     setEventHistory(history);
   }
 
+  async function quickLog(plantId, type) {
+    await plantService.recordEvent(plantId, type);
+    await loadDashboardData();
+    if (selectedPlantId === plantId) {
+      await loadHistory(plantId);
+    }
+  }
+
   async function saveSchedule(event) {
     event.preventDefault();
     if (!selectedPlantId) return;
@@ -284,6 +292,12 @@ export function App({ summaryService, authService, plantService }) {
                         </button>
                         <button type="button" onClick={() => loadHistory(plant.id)}>
                           History
+                        </button>
+                        <button type="button" onClick={() => quickLog(plant.id, 'water')}>
+                          Log water
+                        </button>
+                        <button type="button" onClick={() => quickLog(plant.id, 'repot')}>
+                          Log repot
                         </button>
                       </>
                     )}
