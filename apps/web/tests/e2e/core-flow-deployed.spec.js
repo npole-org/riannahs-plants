@@ -15,10 +15,24 @@ test('core deployed flow: login, add plant, see due/tasks sections', async ({ pa
   await expect(page.getByText('Signed in as')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Due tasks' })).toBeVisible();
 
+  const summary = page.getByLabel('dashboard-summary');
+  const beforeText = (await summary.textContent()) || '';
+  const beforeMatch = beforeText.match(/Total plants:\s*(\d+)/);
+  const beforeCount = beforeMatch ? Number(beforeMatch[1]) : 0;
+
   const nickname = `e2e-${Date.now()}`;
   await page.getByLabel('New plant nickname').fill(nickname);
-  await page.getByRole('button', { name: 'Add plant' }).click();
 
-  await expect(page.getByText(nickname)).toBeVisible();
+  const createResp = page.waitForResponse((r) => r.url().includes('/plants') && r.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Add plant' }).click();
+  const resp = await createResp;
+  expect(resp.ok()).toBeTruthy();
+
+  await expect.poll(async () => {
+    const text = (await summary.textContent()) || '';
+    const m = text.match(/Total plants:\s*(\d+)/);
+    return m ? Number(m[1]) : 0;
+  }, { timeout: 15000 }).toBeGreaterThanOrEqual(beforeCount + 1);
+
   await expect(page.getByRole('heading', { name: 'Repot this week' })).toBeVisible();
 });
