@@ -69,7 +69,7 @@ function allowedOriginsFor(env) {
     'https://riannahs-garden.npole.org',
     'http://localhost:5173'
   ];
-  return configuredOrigins.length ? configuredOrigins : defaultOrigins;
+  return Array.from(new Set([...defaultOrigins, ...configuredOrigins]));
 }
 
 function buildCorsHeaders(request, env) {
