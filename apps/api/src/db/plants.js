@@ -15,6 +15,21 @@ export function createPlantsRepo(db) {
       return results || [];
     },
 
+    async getById({ id, ownerUserId }) {
+      if (!db) {
+        throw new Error('db_not_bound');
+      }
+
+      const row = await db
+        .prepare(
+          'SELECT id, owner_user_id, nickname, species_common, species_scientific, acquired_on, notes, created_at FROM plants WHERE id = ?1 AND owner_user_id = ?2 LIMIT 1'
+        )
+        .bind(id, ownerUserId)
+        .first();
+
+      return row || null;
+    },
+
     async createPlant(plant) {
       if (!db) {
         throw new Error('db_not_bound');
