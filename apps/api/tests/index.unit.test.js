@@ -281,6 +281,30 @@ describe('worker index', () => {
     expect(body.event.type).toBe('water');
   });
 
+  test('get plant endpoint returns owner-scoped record', async () => {
+    const db = {
+      prepare(sql) {
+        if (sql.startsWith('SELECT id, owner_user_id, nickname')) {
+          return {
+            bind() {
+              return { first: async () => ({ id: 'p1', owner_user_id: 'u1', nickname: 'Pothos' }) };
+            }
+          };
+        }
+        throw new Error('unexpected sql');
+      }
+    };
+
+    const res = await worker.fetch(new Request('http://local/plants/p1', { method: 'GET', headers: { cookie: userCookie() } }), {
+      DB: db
+    });
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.plant.id).toBe('p1');
+  });
+
   test('update plant endpoint updates owner-scoped record', async () => {
     const db = {
       prepare(sql) {

@@ -29,6 +29,21 @@ export async function listPlantsHandler({ plantsRepo, session }) {
   return json(200, { ok: true, plants });
 }
 
+export async function getPlantHandler({ plantsRepo, session, plantId }) {
+  try {
+    requireSession(session);
+  } catch {
+    return json(401, { ok: false, error: 'unauthorized' });
+  }
+
+  const plant = await plantsRepo.getById({ id: plantId, ownerUserId: session.userId });
+  if (!plant) {
+    return json(404, { ok: false, error: 'plant_not_found' });
+  }
+
+  return json(200, { ok: true, plant });
+}
+
 export async function createPlantHandler(request, { plantsRepo, session }) {
   try {
     requireSession(session);
