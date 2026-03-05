@@ -6,13 +6,16 @@ test('login endpoint is reachable from deployed app (no Pages 405)', async ({ pa
   await page.getByLabel('Email').fill('nobody@example.com');
   await page.getByLabel('Password').fill('nottherightpass');
 
-  const loginResponsePromise = page.waitForResponse(
-    (response) => response.request().method() === 'POST' && response.url().includes('/auth/login')
+  const loginRequestPromise = page.waitForRequest(
+    (request) => request.method() === 'POST' && request.url().includes('/auth/login'),
+    { timeout: 15000 }
   );
 
   await page.getByRole('button', { name: 'Sign in' }).click();
 
-  const loginResponse = await loginResponsePromise;
+  const loginRequest = await loginRequestPromise;
+  const loginResponse = await loginRequest.response();
+  expect(loginResponse).not.toBeNull();
   expect(loginResponse.status()).not.toBe(405);
-  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(page.getByRole('alert')).toBeVisible({ timeout: 15000 });
 });
