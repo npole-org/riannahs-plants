@@ -28,7 +28,7 @@ function notFound() {
   return json(404, { ok: false, error: 'not_found' });
 }
 
-function isCrossSiteStateChangingRequest(request) {
+function isCrossSiteStateChangingRequest(request, env) {
   const method = request.method.toUpperCase();
   const unsafeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
   if (!unsafeMethods.has(method)) {
@@ -46,18 +46,16 @@ function isCrossSiteStateChangingRequest(request) {
   }
 
   try {
-    return origin !== new URL(request.url).origin;
+    const requestOrigin = new URL(request.url).origin;
+    if (origin === requestOrigin) return false;
+    // Allow configured first-party app origins making cross-origin API calls.
+    return !allowedOriginsFor(env).includes(origin);
   } catch {
     return false;
   }
 }
 
-function buildCorsHeaders(request, env) {
-  const origin = request.headers.get('origin');
-  if (!origin) {
-    return null;
-  }
-
+function allowedOriginsFor(env) {
   const configuredOrigins = String(env.CORS_ALLOWED_ORIGINS ?? '')
     .split(',')
     .map((item) => item.trim())
@@ -71,8 +69,16 @@ function buildCorsHeaders(request, env) {
     'https://riannahs-garden.npole.org',
     'http://localhost:5173'
   ];
-  const allowedOrigins = configuredOrigins.length ? configuredOrigins : defaultOrigins;
+  return configuredOrigins.length ? configuredOrigins : defaultOrigins;
+}
 
+function buildCorsHeaders(request, env) {
+  const origin = request.headers.get('origin');
+  if (!origin) {
+    return null;
+  }
+
+  const allowedOrigins = allowedOriginsFor(env);
   if (!allowedOrigins.includes(origin)) {
     return null;
   }
@@ -176,7 +182,7 @@ export default {
       return respond(json(200, await checkDatabase(env.DB)));
     }
 
-    if (isCrossSiteStateChangingRequest(request)) {
+    if (isCrossSiteStateChangingRequest(request, env)) {
       return respond(json(403, { ok: false, error: 'forbidden' }));
     }
 
