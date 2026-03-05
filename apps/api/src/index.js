@@ -5,7 +5,7 @@ import { createUsersRepo } from './db/users.js';
 import { createUserHandler } from './auth/admin.js';
 import { readSessionFromCookie } from './auth/session.js';
 import { createPlantsRepo } from './db/plants.js';
-import { createPlantHandler, deletePlantHandler, listPlantsHandler, updatePlantHandler } from './plants/handlers.js';
+import { createPlantHandler, deletePlantHandler, getPlantHandler, listPlantsHandler, updatePlantHandler } from './plants/handlers.js';
 import { createScheduleRepo } from './db/schedule.js';
 import { configureScheduleHandler, dueTasksHandler, plantEventHistoryHandler, recordPlantEventHandler } from './schedule/handlers.js';
 
@@ -214,6 +214,10 @@ export default {
     }
 
     const plantMatch = url.pathname.match(/^\/plants\/([^/]+)$/);
+    if (plantMatch && request.method === 'GET') {
+      return respond(await getPlantHandler({ plantsRepo, session, plantId: plantMatch[1] }));
+    }
+
     if (plantMatch && request.method === 'PUT') {
       return respond(await updatePlantHandler(request, { plantsRepo, session, plantId: plantMatch[1] }));
     }
