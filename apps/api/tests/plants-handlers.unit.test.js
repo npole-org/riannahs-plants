@@ -2,13 +2,9 @@ import { describe, expect, test } from 'vitest';
 import { createPlantHandler, getPlantHandler, listPlantsHandler } from '../src/plants/handlers.js';
 
 describe('plants handlers', () => {
-  test('list returns public plants without session', async () => {
-    const plantsRepo = {
-      listPublic: async () => [{ id: 'public-1' }]
-    };
-    const res = await listPlantsHandler({ plantsRepo, session: null });
-    expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({ ok: true, plants: [{ id: 'public-1' }], authenticated: false });
+  test('list returns unauthorized without session', async () => {
+    const res = await listPlantsHandler({ plantsRepo: {}, session: null });
+    expect(res.status).toBe(401);
   });
 
   test('list returns owner plants for authenticated session', async () => {
@@ -21,7 +17,7 @@ describe('plants handlers', () => {
 
     const res = await listPlantsHandler({ plantsRepo, session: { userId: 'u1' } });
     expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({ ok: true, plants: [{ id: 'p1' }], authenticated: true });
+    await expect(res.json()).resolves.toEqual({ ok: true, plants: [{ id: 'p1' }] });
   });
 
   test('get returns owner plant for authenticated session', async () => {
@@ -35,7 +31,7 @@ describe('plants handlers', () => {
 
     const res = await getPlantHandler({ plantsRepo, session: { userId: 'u1' }, plantId: 'p1' });
     expect(res.status).toBe(200);
-    await expect(res.json()).resolves.toEqual({ ok: true, plant: { id: 'p1', nickname: 'Pothos' }, authenticated: true });
+    await expect(res.json()).resolves.toEqual({ ok: true, plant: { id: 'p1', nickname: 'Pothos' } });
   });
 
   test('create returns invalid_json for malformed body', async () => {

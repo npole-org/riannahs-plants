@@ -2,15 +2,9 @@ import { describe, expect, test } from 'vitest';
 import { configureScheduleHandler, dueTasksHandler, plantEventHistoryHandler, recordPlantEventHandler } from '../src/schedule/handlers.js';
 
 describe('schedule handlers', () => {
-  test('due tasks returns public tasks without auth', async () => {
-    const scheduleRepo = {
-      listDueTasksPublic: async () => [{ id: 'p1', nickname: 'Monstera', next_water_on: '2026-02-27', next_repot_on: null }]
-    };
-    const res = await dueTasksHandler({ scheduleRepo, session: null, now: new Date('2026-02-27T10:00:00Z') });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.authenticated).toBe(false);
-    expect(body.tasks).toHaveLength(1);
+  test('due tasks requires auth', async () => {
+    const res = await dueTasksHandler({ scheduleRepo: {}, session: null });
+    expect(res.status).toBe(401);
   });
 
   test('due tasks flattens due water/repot items', async () => {
@@ -79,15 +73,9 @@ describe('schedule handlers', () => {
     expect(res.status).toBe(404);
   });
 
-  test('event history returns public events without auth', async () => {
-    const scheduleRepo = {
-      listPlantEventsPublic: async () => [{ id: 'e-public', type: 'water' }]
-    };
-    const res = await plantEventHistoryHandler({ scheduleRepo, session: null, plantId: 'p1' });
-    expect(res.status).toBe(200);
-    const body = await res.json();
-    expect(body.authenticated).toBe(false);
-    expect(body.events).toHaveLength(1);
+  test('event history requires auth', async () => {
+    const res = await plantEventHistoryHandler({ scheduleRepo: {}, session: null, plantId: 'p1' });
+    expect(res.status).toBe(401);
   });
 
   test('event history returns owner events', async () => {
