@@ -8,14 +8,10 @@ function requireSession(session) {
 }
 
 export async function dueTasksHandler({ scheduleRepo, session, now = new Date() }) {
-  try {
-    requireSession(session);
-  } catch {
-    return json(401, { ok: false, error: 'unauthorized' });
-  }
-
   const today = now.toISOString().slice(0, 10);
-  const items = await scheduleRepo.listDueTasksByOwner(session.userId, today);
+  const items = session?.userId
+    ? await scheduleRepo.listDueTasksByOwner(session.userId, today)
+    : await scheduleRepo.listDueTasksPublic(today);
 
   const tasks = items.flatMap((plant) => {
     const due = [];
@@ -28,7 +24,7 @@ export async function dueTasksHandler({ scheduleRepo, session, now = new Date() 
     return due;
   });
 
-  return json(200, { ok: true, tasks });
+  return json(200, { ok: true, tasks, authenticated: Boolean(session?.userId) });
 }
 
 export async function recordPlantEventHandler(request, { scheduleRepo, session, plantId }) {
@@ -71,14 +67,10 @@ export async function recordPlantEventHandler(request, { scheduleRepo, session, 
 }
 
 export async function plantEventHistoryHandler({ scheduleRepo, session, plantId }) {
-  try {
-    requireSession(session);
-  } catch {
-    return json(401, { ok: false, error: 'unauthorized' });
-  }
-
-  const events = await scheduleRepo.listPlantEvents({ plantId, ownerUserId: session.userId });
-  return json(200, { ok: true, events });
+  const events = session?.userId
+    ? await scheduleRepo.listPlantEvents({ plantId, ownerUserId: session.userId })
+    : await scheduleRepo.listPlantEventsPublic({ plantId });
+  return json(200, { ok: true, events, authenticated: Boolean(session?.userId) });
 }
 
 export async function configureScheduleHandler(request, { scheduleRepo, session, plantId }) {

@@ -153,9 +153,27 @@ describe('worker index', () => {
     expect(body.user.role).toBe('user');
   });
 
-  test('plants endpoints require auth', async () => {
-    const res = await worker.fetch(new Request('http://local/plants'), { DB: {} });
-    expect(res.status).toBe(401);
+  test('plants endpoint supports public read access', async () => {
+    const db = {
+      prepare(sql) {
+        if (!sql.startsWith('SELECT id, nickname')) {
+          throw new Error('unexpected sql');
+        }
+
+        return {
+          all: async () => ({
+            results: [{ id: 'p1', nickname: 'Monstera' }]
+          })
+        };
+      }
+    };
+
+    const res = await worker.fetch(new Request('http://local/plants'), { DB: db });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.ok).toBe(true);
+    expect(body.authenticated).toBe(false);
+    expect(body.plants).toHaveLength(1);
   });
 
   test('list plants returns scoped records', async () => {

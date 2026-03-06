@@ -43,7 +43,7 @@ describe('App', () => {
     fireEvent.change(screen.getByLabelText('Password'), { target: { value: '123456789012' } });
     fireEvent.click(screen.getByText('Sign in'));
 
-    expect(await screen.findByText('Monstera')).toBeInTheDocument();
+    expect(await screen.findByText('Signed in as admin.')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Admin' })[0]);
     fireEvent.change(screen.getByLabelText('User email'), { target: { value: 'new-user@example.com' } });

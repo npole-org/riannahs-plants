@@ -20,6 +20,25 @@ export function createScheduleRepo(db) {
       return results || [];
     },
 
+    async listDueTasksPublic(todayIsoDate) {
+      if (!db) {
+        throw new Error('db_not_bound');
+      }
+
+      const { results } = await db
+        .prepare(
+          `SELECT id, nickname, next_water_on, next_repot_on
+           FROM plants
+           WHERE (next_water_on IS NOT NULL AND next_water_on <= ?1)
+              OR (next_repot_on IS NOT NULL AND next_repot_on <= ?1)
+           ORDER BY nickname ASC`
+        )
+        .bind(todayIsoDate)
+        .all();
+
+      return results || [];
+    },
+
     async recordPlantEvent({ plantId, ownerUserId, type, occurredOn, nextDueOn }) {
       if (!db) {
         throw new Error('db_not_bound');
@@ -57,6 +76,19 @@ export function createScheduleRepo(db) {
           'SELECT id, plant_id, type, occurred_on, next_due_on, created_at FROM plant_events WHERE plant_id = ?1 AND owner_user_id = ?2 ORDER BY occurred_on DESC, created_at DESC'
         )
         .bind(plantId, ownerUserId)
+        .all();
+
+      return results || [];
+    },
+
+    async listPlantEventsPublic({ plantId }) {
+      if (!db) throw new Error('db_not_bound');
+
+      const { results } = await db
+        .prepare(
+          'SELECT id, plant_id, type, occurred_on, next_due_on, created_at FROM plant_events WHERE plant_id = ?1 ORDER BY occurred_on DESC, created_at DESC'
+        )
+        .bind(plantId)
         .all();
 
       return results || [];

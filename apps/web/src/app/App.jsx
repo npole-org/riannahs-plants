@@ -125,7 +125,7 @@ export function App({ summaryService, authService, plantService }) {
       })
       .catch(() => {
         if (!active) return;
-        setRole(null);
+        setRole((current) => current || 'viewer');
       })
       .finally(() => {
         if (active) setSessionBootstrapped(true);
@@ -151,7 +151,7 @@ export function App({ summaryService, authService, plantService }) {
 
   async function onLogout() {
     await authService.logout();
-    setRole(null);
+    setRole('viewer');
     setSummary(EMPTY_SUMMARY);
     setPlants([]);
     setSelectedPlantId('');
@@ -298,29 +298,49 @@ export function App({ summaryService, authService, plantService }) {
       <h1>riannah's garden</h1>
       {!sessionBootstrapped ? (
         <section aria-label="session-loading"><p>Restoring session…</p></section>
-      ) : !role ? (
-        <section aria-label="login-form">
-          <p>Sign in to continue.</p>
-          <form onSubmit={onLogin}>
-            <label>
-              Email
-              <input name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-            </label>
-            <label>
-              Password
-              <input
-                name="password"
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                minLength={12}
-                required
-              />
-            </label>
-            <button type="submit">Sign in</button>
-          </form>
-          {error ? <p role="alert">{error}</p> : null}
-        </section>
+      ) : role === 'viewer' ? (
+        <>
+          <section aria-label="public-garden-view" className="summary-cards">
+            <p><strong>Total plants:</strong> {summary.plants}</p>
+            <p><strong>Due today:</strong> {summary.dueToday}</p>
+            <p><strong>Upcoming:</strong> {summary.upcoming}</p>
+          </section>
+          <section aria-label="public-plant-list" className="plant-management">
+            <h2>Garden plants</h2>
+            {plants.length === 0 ? <p>No plants shared yet.</p> : (
+              <ul className="plant-list">
+                {plants.map((plant) => (
+                  <li key={plant.id} className="plant-row">
+                    <span className="plant-title">{plant.nickname}</span>
+                    <small>{plant.species_common || 'species unknown'}</small>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          <section aria-label="login-form">
+            <p>Sign in to edit plants and schedules.</p>
+            <form onSubmit={onLogin}>
+              <label>
+                Email
+                <input name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+              </label>
+              <label>
+                Password
+                <input
+                  name="password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  minLength={12}
+                  required
+                />
+              </label>
+              <button type="submit">Sign in</button>
+            </form>
+            {error ? <p role="alert">{error}</p> : null}
+          </section>
+        </>
       ) : (
         <>
           <div className="topbar">
