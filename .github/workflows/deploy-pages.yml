@@ -134,8 +134,9 @@ jobs:
           command: pages deploy apps/web/dist --project-name=${{ env.TARGET_PROJECT }} --branch=main --commit-dirty=true
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Purge Cloudflare cache for site shell URLs
+      - name: Purge Cloudflare cache for site shell URLs (best effort)
         if: env.CLOUDFLARE_ZONE_ID != ''
+        continue-on-error: true
         run: |
           if [ "$DEPLOY_TARGET" = "prod" ]; then
             SITE_URL="https://riannahs-garden.npole.org"
@@ -148,9 +149,9 @@ jobs:
           curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/$CLOUDFLARE_ZONE_ID/purge_cache" \
             -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
             -H "Content-Type: application/json" \
-            --data "$payload" | tee /tmp/cf-purge.json
+            --data "$payload" | tee /tmp/cf-purge.json || true
 
-          jq -e '.success == true' /tmp/cf-purge.json >/dev/null
+          jq -e '.success == true' /tmp/cf-purge.json >/dev/null || echo "Cache purge skipped/failed (non-blocking)"
 
   deployed-e2e:
     needs: deploy-web
