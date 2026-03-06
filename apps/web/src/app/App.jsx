@@ -75,6 +75,7 @@ export function App({ summaryService, authService, plantService }) {
   const [newUserRole, setNewUserRole] = useState('user');
   const [createdUserEmail, setCreatedUserEmail] = useState('');
   const [activePage, setActivePage] = useState('dashboard');
+  const [mobileTab, setMobileTab] = useState('plants');
 
   async function loadDashboardData() {
     const [nextSummary, nextPlants] = await Promise.all([summaryService.getSummary(), plantService.listPlants()]);
@@ -359,12 +360,18 @@ export function App({ summaryService, authService, plantService }) {
             </section>
           ) : null}
           {activePage === 'dashboard' ? (<div className="dashboard-grid">
-          <section aria-label="dashboard-summary" className="summary-cards">
+            <nav className="mobile-tabs" aria-label="mobile-dashboard-tabs">
+              <button type="button" className={mobileTab==='plants'?'active':''} onClick={() => setMobileTab('plants')}>Plants</button>
+              <button type="button" className={mobileTab==='water'?'active':''} onClick={() => setMobileTab('water')}>Water Today</button>
+              <button type="button" className={mobileTab==='schedule'?'active':''} onClick={() => setMobileTab('schedule')}>Schedule</button>
+              <button type="button" className={mobileTab==='history'?'active':''} onClick={() => setMobileTab('history')}>History</button>
+            </nav>
+          {(mobileTab === 'water' || mobileTab === 'plants') ? <section aria-label="dashboard-summary" className="summary-cards">
             <p><strong>Total plants:</strong> {summary.plants}</p>
             <p><strong>Due today:</strong> {summary.dueToday}</p>
             <p><strong>Upcoming:</strong> {summary.upcoming}</p>
-          </section>
-          <section aria-label="dashboard-due-list">
+          </section> : null}
+          {mobileTab === 'water' ? <section aria-label="dashboard-due-list">
             <h2>Water today</h2>
             {summary.tasks.length === 0 ? (
               <p>No tasks due.</p>
@@ -377,8 +384,8 @@ export function App({ summaryService, authService, plantService }) {
                 ))}
               </ul>
             )}
-          </section>
-          <section aria-label="repot-week-list">
+          </section> : null}
+          {mobileTab === 'water' ? <section aria-label="repot-week-list">
             <h2>Repot this week</h2>
             {repotThisWeek.length === 0 ? (
               <p>No repot tasks this week.</p>
@@ -389,8 +396,8 @@ export function App({ summaryService, authService, plantService }) {
                 ))}
               </ul>
             )}
-          </section>
-          <section aria-label="plant-management" className="plant-management">
+          </section> : null}
+          {mobileTab === 'plants' ? <section aria-label="plant-management" className="plant-management">
             <h2>Plants</h2>
             <form onSubmit={onAddPlant}>
               <label>
@@ -471,8 +478,8 @@ export function App({ summaryService, authService, plantService }) {
                 ))}
               </ul>
             )}
-          </section>
-          <section aria-label="schedule-config">
+          </section> : null}
+          {mobileTab === 'schedule' ? <section aria-label="schedule-config">
             <h2>Schedule config</h2>
             <p>Selected plant: {selectedPlantId || 'none'}</p>
             <form onSubmit={saveSchedule}>
@@ -486,8 +493,8 @@ export function App({ summaryService, authService, plantService }) {
               </label>
               <button type="submit">Save schedule</button>
             </form>
-          </section>
-          <section aria-label="plant-detail-view">
+          </section> : null}
+          {(mobileTab === 'plants' || mobileTab === 'history') ? <section aria-label="plant-detail-view">
             <h2>Selected plant detail</h2>
             {!selectedPlant ? (
               <p>Select a plant to view details.</p>
@@ -518,8 +525,8 @@ export function App({ summaryService, authService, plantService }) {
                 {saveMessage ? <p>{saveMessage}</p> : null}
               </div>
             )}
-          </section>
-          <section aria-label="event-history">
+          </section> : null}
+          {mobileTab === 'history' ? <section aria-label="event-history">
             <h2>Event history</h2>
             {eventHistory.length === 0 ? (
               <p>No events loaded.</p>
@@ -532,12 +539,16 @@ export function App({ summaryService, authService, plantService }) {
                 ))}
               </ul>
             )}
-          </section>
+          </section> : null}
           </div>) : null}
           {error ? <p role="alert">{error}</p> : null}
           <button onClick={onLogout} type="button">
             Sign out
           </button>
+          <nav className="app-bottom-nav" aria-label="app-bottom-nav">
+            <button type="button" className={activePage==='dashboard'?'active':''} onClick={() => setActivePage('dashboard')}>Home</button>
+            {role === 'admin' ? <button type="button" className={activePage==='admin'?'active':''} onClick={() => setActivePage('admin')}>Admin</button> : null}
+          </nav>
         </>
       )}
     </main>

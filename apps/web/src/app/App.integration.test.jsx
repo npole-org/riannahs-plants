@@ -45,7 +45,7 @@ describe('App', () => {
 
     expect(await screen.findByText('Monstera')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Admin' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Admin' })[0]);
     fireEvent.change(screen.getByLabelText('User email'), { target: { value: 'new-user@example.com' } });
     fireEvent.change(screen.getByLabelText('Temporary password'), { target: { value: 'temporarypass' } });
     fireEvent.click(screen.getByRole('button', { name: 'Create user' }));
@@ -64,9 +64,11 @@ describe('App', () => {
     fireEvent.click(screen.getAllByText('History')[0]);
     expect(await screen.findByText('water · 2026-02-27')).toBeInTheDocument();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Schedule' }));
     fireEvent.change(screen.getByLabelText('Next water on'), { target: { value: '2026-03-01' } });
     fireEvent.click(screen.getByText('Save schedule'));
 
+    fireEvent.click(screen.getByRole('button', { name: 'Plants' }));
     fireEvent.click(screen.getAllByText('Delete')[0]);
     expect((await screen.findByLabelText('dashboard-summary')).textContent).toContain('Total plants: 1');
   });
