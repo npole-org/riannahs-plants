@@ -19,20 +19,29 @@ async function parsePlantPayload(request) {
 }
 
 export async function listPlantsHandler({ plantsRepo, session }) {
-  const plants = session?.userId ? await plantsRepo.listByOwner(session.userId) : await plantsRepo.listPublic();
-  return json(200, { ok: true, plants, authenticated: Boolean(session?.userId) });
+  try {
+    requireSession(session);
+  } catch {
+    return json(401, { ok: false, error: 'unauthorized' });
+  }
+
+  const plants = await plantsRepo.listByOwner(session.userId);
+  return json(200, { ok: true, plants });
 }
 
 export async function getPlantHandler({ plantsRepo, session, plantId }) {
-  const plant = session?.userId
-    ? await plantsRepo.getById({ id: plantId, ownerUserId: session.userId })
-    : await plantsRepo.getPublicById(plantId);
+  try {
+    requireSession(session);
+  } catch {
+    return json(401, { ok: false, error: 'unauthorized' });
+  }
 
+  const plant = await plantsRepo.getById({ id: plantId, ownerUserId: session.userId });
   if (!plant) {
     return json(404, { ok: false, error: 'plant_not_found' });
   }
 
-  return json(200, { ok: true, plant, authenticated: Boolean(session?.userId) });
+  return json(200, { ok: true, plant });
 }
 
 export async function createPlantHandler(request, { plantsRepo, session }) {
