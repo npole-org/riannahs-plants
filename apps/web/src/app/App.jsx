@@ -91,6 +91,7 @@ export function App({ summaryService, authService, plantService }) {
       last[item.id] = water?.occurred_on || '';
     }
     setLastWateredByPlant(last);
+    setError('');
   }
 
   useEffect(() => {
